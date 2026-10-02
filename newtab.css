@@ -1,0 +1,102 @@
+html { font-size: clamp(10px, 0.84vw, 15px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; overflow-x: hidden;
+  background: var(--ground); color: var(--text);
+  font-family: var(--narrow); font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+/* fine grain over everything */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .07; z-index: 50;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.mono { font-family: var(--mono); font-weight: 400; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+
+header, main { width: min(82rem, 100% - 8rem); margin: 0 auto; }
+header { padding-top: 13vh; }
+h1 { margin: 0; font: 400 2.3rem/1.1 var(--serif); letter-spacing: -.01em; }
+#hint { margin: .7rem 0 0; font-size: .85rem; color: var(--dim); }
+
+main { margin-top: 1.4rem; padding-bottom: 8rem; }
+.group + .group { margin-top: 3rem; }
+.group h2 { margin: 0 0 -.6rem; font: 400 .8rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.row { display: flex; align-items: flex-end; gap: .35rem; padding-top: 3rem; min-height: 6rem; }
+.plank {
+  height: .55rem; margin: 0 -1.8rem; border-radius: .12rem; background: var(--shelf);
+  box-shadow: 0 .6rem 1.4rem rgba(0, 0, 0, .4);
+}
+.row + .plank + .row { margin-top: 1.2rem; }
+.empty { padding: 2rem 0 1rem; font: 400 .9rem var(--mono); color: var(--dim); }
+
+.book {
+  position: relative; flex: none; display: flex; flex-direction: column; align-items: center;
+  padding: .7rem 0; border-radius: .3rem .3rem .08rem .08rem;
+  background: var(--bg); color: var(--fg); text-decoration: none;
+  transition: transform .16s ease-out;
+}
+.book::after { /* the band near the foot of the spine */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 2.5rem; height: .16rem; background: currentColor; opacity: .22;
+}
+.book:hover, .book:focus-visible { transform: translateY(-1.3rem); outline: none; }
+.book:focus-visible { box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--verm); }
+.book.lean { transform-origin: 0 100%; transform: rotate(-9deg); margin-left: 2.7rem; }
+.book.lean:hover, .book.lean:focus-visible { transform: rotate(-9deg) translateY(-1.3rem); }
+
+.chip { width: 2.7rem; height: 2.7rem; flex: none; border-radius: .4rem; background: var(--chip); display: grid; place-items: center; }
+.chip img { width: 1.7rem; height: 1.7rem; display: block; object-fit: contain; }
+.chip img[hidden], .letter[hidden] { display: none; }
+.letter { font: 400 1.5rem/1 var(--serif); color: #17222E; }
+.book .nm {
+  flex: 1; min-height: 0; margin-top: .55rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  writing-mode: vertical-rl; font-size: 1.55rem; letter-spacing: .05em; line-height: 1;
+}
+.book .k { margin-top: .9rem; font-size: .95rem; opacity: .75; height: 1rem; }
+.ribbon { /* peeks out of the top like a real bookmark, stops just above the icon */
+  position: absolute; top: -1.9rem; right: .45rem; width: .9rem; height: 2.5rem; background: var(--verm);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+}
+
+/* edit mode: no wobble, just a grab cursor and a drop marker */
+body.editing .book { cursor: grab; }
+body.editing .book:hover { transform: translateY(-.5rem); }
+.book.dragging { opacity: .35; }
+.book.drop-before::before, .book.drop-after::before {
+  content: ""; position: absolute; top: 0; bottom: 0; width: .22rem; border-radius: .1rem; background: var(--verm);
+}
+.book.drop-before::before { left: -.3rem; }
+.book.drop-after::before { right: -.3rem; }
+.book.selected { transform: translateY(-1.3rem); }
+
+.dock { position: fixed; right: 2.4rem; bottom: 2.2rem; display: flex; gap: 1.2rem; z-index: 20; }
+.dock button { width: 2.6rem; height: 2.6rem; display: grid; place-items: center; color: var(--dim); border-radius: .4rem; transition: color .12s, background .12s; }
+.dock button:hover { color: var(--text); background: var(--card); }
+.dock button.on { color: var(--verm); }
+.dock svg { width: 1.6rem; height: 1.6rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.panel {
+  position: fixed; z-index: 30; width: 18rem; padding: 1rem 1.1rem 1.1rem;
+  background: var(--card); border-radius: .5rem; box-shadow: 0 1rem 3rem rgba(0, 0, 0, .45);
+}
+.panel h3 { margin: 0 0 .4rem; font: 400 1.35rem var(--serif); }
+.panel label { display: block; margin: .8rem 0 .35rem; font: 400 .72rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.panel input[type=text], .panel select {
+  width: 100%; padding: .45rem .6rem; border: 0; border-radius: .3rem; outline: none;
+  background: var(--ground); color: var(--text); font: 500 1.05rem var(--narrow);
+}
+.panel input[type=text]:focus, .panel select:focus { box-shadow: inset 0 0 0 1px var(--verm); }
+.panel .opts { display: flex; gap: .4rem; align-items: flex-end; }
+.sizes button { width: 2.6rem; height: 2.6rem; border-radius: .3rem; background: var(--ground); display: flex; align-items: flex-end; justify-content: center; padding-bottom: .4rem; }
+.sizes button i { display: block; width: .7rem; border-radius: .1rem .1rem 0 0; background: var(--dim); }
+.sizes button.on i { background: var(--verm); }
+.inks button { width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.inks button.on { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text); }
+.iconrow { display: flex; align-items: center; gap: .8rem; }
+.link { font-size: 1rem; color: var(--dim); }
+.link:hover { color: var(--text); }
+.panel label.check { display: flex; gap: .55rem; align-items: center; margin: .9rem 0 0; font: 500 1.05rem var(--narrow); letter-spacing: 0; text-transform: none; color: var(--text); cursor: pointer; }
+.check input { accent-color: var(--verm); width: 1rem; height: 1rem; margin: 0; }
+.actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.2rem; }
+.primary { padding: .45rem 1rem; border-radius: .3rem; background: var(--verm); color: #17222E; font-size: 1.05rem; }
+.danger.armed { color: var(--verm); }

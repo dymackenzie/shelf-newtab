@@ -1,0 +1,26 @@
+/* Collage Night, same values as the Hermes skin (skins/collage-night.yaml).
+   Swap this file to reskin the shelf. */
+@font-face { font-family: "Fraunces"; src: url(fonts/fraunces.woff2) format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Archivo Narrow"; src: url(fonts/archivo-narrow.woff2) format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "JetBrains Mono"; src: url(fonts/jetbrains-mono.woff2) format("woff2"); font-weight: 400; font-display: block; }
+
+:root {
+  --ground: #1B2027;
+  --card: #222830;
+  --card-up: #283039;
+  --text: #E8E1D3;
+  --dim: #A8A193;
+  --verm: #F27358;
+  --shelf: #C9A77C;
+  --chip: #EFE9DD;
+
+  /* spine inks: background / text, every pair is over 5:1 */
+  --ink0-bg: #46606F; --ink0-fg: #F2ECE0;
+  --ink1-bg: #E8E1D3; --ink1-fg: #17222E;
+  --ink2-bg: #2B333D; --ink2-fg: #E8E1D3;
+  --ink3-bg: #C9A77C; --ink3-fg: #17222E;
+
+  --serif: "Fraunces", Georgia, serif;
+  --narrow: "Archivo Narrow", "Arial Narrow", sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
