@@ -13,12 +13,22 @@
   --verm: #F27358;
   --shelf: #C9A77C;
   --chip: #EFE9DD;
+  --ink-dark: #17222E;
 
-  /* spine inks: background / text, every pair is over 5:1 */
+  --track-on: var(--verm);
+  --knob-on: var(--ink-dark);
+  --track-off: #3A424D;
+  --knob-off: var(--dim);
+
+  /* spine inks: background / text */
   --ink0-bg: #46606F; --ink0-fg: #F2ECE0;
-  --ink1-bg: #E8E1D3; --ink1-fg: #17222E;
+  --ink1-bg: #E8E1D3; --ink1-fg: var(--ink-dark);
   --ink2-bg: #2B333D; --ink2-fg: #E8E1D3;
-  --ink3-bg: #C9A77C; --ink3-fg: #17222E;
+  --ink3-bg: #C9A77C; --ink3-fg: var(--ink-dark);
+
+  /* every text colour the page puts on a background, plus the inks above.
+     tests/cdp_test.py holds each pair to 5:1.
+     pairs: text/ground text/card text/card-up dim/ground dim/card dim/card-up verm/ground verm/card ink-dark/verm ink-dark/chip */
 
   --serif: "Fraunces", Georgia, serif;
   --narrow: "Archivo Narrow", "Arial Narrow", sans-serif;
