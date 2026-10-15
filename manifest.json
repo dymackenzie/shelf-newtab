@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Shelf",
   "short_name": "Shelf",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Your bookmarks as books on a shelf. Hermes Collage Night colours.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAorMRdh7D3ZX9Yy+tXmMkIphsOndbLvCzy47G1I4zKgCHwUvAUvek2/+nZfhMezKvFBf3fxRWHnRkpY0YLLP4AfKarBcHmw+QezmiZXJMkdyJGADu7QDKhnPyx3YTvC+c+t7SeFL2Wbd6D33GMvOhh7BsEi63XGlJLHRysmP5HBsC7J2SsUUW0nAoV2lAVOV48Mah+oizE829Uz1V9Xgut6ji3XNBfoK7EnwTYpk6sXEHYu8LyAA2oetEO7XhV/n9iD8OK1/nhrOHF3pSc19MqiZdpa9yw0uU0GzDuMxdqP0SVU8zQlDSddpIQyjyc341NRoL6glGXmIeV4IPaLvU/QIDAQAB",
   "chrome_url_overrides": {
@@ -13,6 +13,9 @@
     "favicon",
     "storage",
     "history"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
   ],
   "icons": {
     "16": "icons/16.png",
