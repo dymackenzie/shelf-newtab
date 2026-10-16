@@ -1,36 +1,48 @@
-/* Collage Night, same values as the Hermes skin (skins/collage-night.yaml).
+/* Putty. Ground sampled from Shopify Editions, spines after Grokipedia's shelf.
    Swap this file to reskin the shelf. */
-@font-face { font-family: "Fraunces"; src: url(fonts/fraunces.woff2) format("woff2"); font-weight: 100 900; font-display: block; }
-@font-face { font-family: "Archivo Narrow"; src: url(fonts/archivo-narrow.woff2) format("woff2"); font-weight: 500; font-display: block; }
+@font-face { font-family: "Fraunces"; src: url(fonts/fraunces.woff2) format("woff2"); font-weight: 100 900; font-style: normal; font-display: block; }
+@font-face { font-family: "Fraunces"; src: url(fonts/fraunces-italic.woff2) format("woff2"); font-weight: 300 600; font-style: italic; font-display: block; }
+@font-face { font-family: "Archivo"; src: url(fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
 @font-face { font-family: "JetBrains Mono"; src: url(fonts/jetbrains-mono.woff2) format("woff2"); font-weight: 400; font-display: block; }
 
 :root {
-  --ground: #1B2027;
-  --card: #222830;
-  --card-up: #283039;
-  --text: #E8E1D3;
-  --dim: #A8A193;
-  --verm: #F27358;
-  --shelf: #C9A77C;
-  --chip: #EFE9DD;
-  --ink-dark: #17222E;
+  color-scheme: light;
 
-  --track-on: var(--verm);
-  --knob-on: var(--ink-dark);
-  --track-off: #3A424D;
-  --knob-off: var(--dim);
+  --ground: #DDDDD1;
+  --card: #E9E8DF;
+  --field: #DDDDD1;
+  --text: #141210;
+  --dim: #5A5950;
+  --accent: #E2187F;       /* shapes only, too light for text */
+  --accent-text: #A30E57;
+  --chip: #EFE9D8;
+  --ink-dark: #141210;
+  --oak-top: #D6C3A0; --oak-top-back: #C9B38C;
+  --oak-front: #B89D72; --oak-front-low: #A88D63;
+  --shadow: 32, 30, 22;    /* rgb, so shadows stay warm */
+  --grain: .1;
+  --rule: rgba(32, 30, 22, .45);
 
-  /* spine inks: background / text */
-  --ink0-bg: #46606F; --ink0-fg: #F2ECE0;
-  --ink1-bg: #E8E1D3; --ink1-fg: var(--ink-dark);
-  --ink2-bg: #2B333D; --ink2-fg: #E8E1D3;
-  --ink3-bg: #C9A77C; --ink3-fg: var(--ink-dark);
+  --track-on: var(--text);
+  --knob-on: var(--ground);
+  --track-off: #C4C3B6;
+  --knob-off: var(--card);
+
+  /* spine inks: background / text. 0-3 keep their old slots so saved books stay close */
+  --ink0-bg: #1E2C48; --ink0-fg: #ECE8DC;
+  --ink1-bg: #EFE9D8; --ink1-fg: #1F1C17;
+  --ink2-bg: #23211D; --ink2-fg: #ECE8DC;
+  --ink3-bg: #C79A3E; --ink3-fg: #1A1612;
+  --ink4-bg: #6B2422; --ink4-fg: #F1E6DA;
+  --ink5-bg: #24402F; --ink5-fg: #ECE8DA;
+  --ink6-bg: #A4442A; --ink6-fg: #F6EEE2;
+  --ink7-bg: #2D5862; --ink7-fg: #F0ECE0;
 
   /* every text colour the page puts on a background, plus the inks above.
      tests/cdp_test.py holds each pair to 5:1.
-     pairs: text/ground text/card text/card-up dim/ground dim/card dim/card-up verm/ground verm/card ink-dark/verm ink-dark/chip */
+     pairs: text/ground text/card dim/ground dim/card dim/field accent-text/ground accent-text/card ground/ink-dark ink-dark/chip */
 
   --serif: "Fraunces", Georgia, serif;
-  --narrow: "Archivo Narrow", "Arial Narrow", sans-serif;
+  --sans: "Archivo", "Arial Narrow", sans-serif;
   --mono: "JetBrains Mono", Consolas, monospace;
 }

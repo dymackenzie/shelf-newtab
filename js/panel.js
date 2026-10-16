@@ -29,9 +29,10 @@ export function closePanel() {
 function place(anchor) {
   panel.hidden = false;
   const p = panel.getBoundingClientRect();
-  if (!anchor) { // dock panels sit above the dock
-    panel.style.left = `${innerWidth - p.width - 2.4 * rem()}px`;
-    panel.style.top = `${innerHeight - p.height - 5.6 * rem()}px`;
+  if (!anchor) { // dock panels hang under the top bar, lined up with its right edge
+    const d = $('.dock').getBoundingClientRect();
+    panel.style.left = `${Math.max(16, d.right - p.width)}px`;
+    panel.style.top = `${d.bottom + 0.8 * rem()}px`;
     return;
   }
   const r = anchor.getBoundingClientRect(), pad = 16;
