@@ -1,5 +1,7 @@
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+// dragging selected text makes the text node the event target, and text nodes have no closest()
+export const elOf = node => (node?.nodeType === 1 ? node : node?.parentElement) || document.body;
 export const rem = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
 
 // tiny element builder. strings become text nodes, so titles and urls never touch innerHTML

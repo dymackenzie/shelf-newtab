@@ -1,4 +1,4 @@
-import { $, $$ } from './dom.js';
+import { $, $$, elOf } from './dom.js';
 import { get } from './store.js';
 import { targetAt, mark, clearMark } from './drop.js';
 import { hidePanel, closePanel } from './panel.js';
@@ -16,7 +16,7 @@ function end() {
 
 export function initReorder() {
   $('#shelves').addEventListener('dragstart', e => {
-    const a = e.target.closest('.book');
+    const a = elOf(e.target).closest('.book');
     if (!a || !get().editing || !a.dataset.id) return;
     dragId = a.dataset.id;
     a.classList.add('dragging');
