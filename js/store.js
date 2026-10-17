@@ -1,12 +1,13 @@
 import { readTree, folderList, resolve, groupsOf, ownFolderPath } from './bookmarks.js';
 import { favicon } from './icons.js';
 
-const DEFAULTS = { folder: '', subShelves: true, ribbon: true, lean: true };
+const DEFAULTS = { folder: '', subShelves: true, ribbon: true, lean: true, paper: 'putty', accent: 'magenta', grain: true, painting: true };
 
 const state = {
   settings: { ...DEFAULTS },
   meta: {},       // url -> { s, ink }, synced so sizes follow you between computers
   icons: {},      // url -> data url, local only (too big for sync)
+  cloth: {},      // url -> { bg, fg } read off its icon, local only
   folders: [],
   folder: null,
   groups: [],
@@ -43,7 +44,12 @@ export const setTop = top => { if (top !== state.top) set({ top }); };
 export const focusAfter = id => { focusId = id; touch(); };
 export const takeFocus = () => { const id = focusId; focusId = null; return id; };
 
-export const metaFor = (url, i) => ({ s: 2, ink: Math.max(i, 0) % 4, ...(state.meta[url] || {}) });
+export const INKS = 8;
+// stable number per address. picks the fallback ink until the icon colour is known, and the book's thickness
+export const hashOf = url => [...(url || '')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+export const inkOf = url => hashOf(url) % INKS;
+// ink is only there when he picked one, otherwise the cover follows the icon
+export const metaFor = url => ({ s: 2, ...(state.meta[url] || {}) });
 export const iconFor = url => state.icons[url] || favicon(url);
 
 function derive() {
@@ -59,6 +65,7 @@ async function loadStorage() {
   state.settings = { ...DEFAULTS, ...(sync.settings || {}) };
   state.meta = pick(sync, 'b:');
   state.icons = pick(local, 'i:');
+  state.cloth = pick(local, 'c:');
   derive();
   touch();
 }
@@ -87,7 +94,8 @@ export async function saveSettings(patch) {
 }
 
 export async function saveMeta(url, patch) {
-  const next = { ...metaFor(url, state.books.findIndex(b => b.url === url)), ...patch };
+  const next = { ...(state.meta[url] || {}), ...patch };
+  for (const k of Object.keys(next)) if (next[k] == null) delete next[k];
   state.meta = { ...state.meta, [url]: next };
   touch();
   await chrome.storage.sync.set({ ['b:' + url]: next });
@@ -97,6 +105,13 @@ export async function saveIcon(url, data) {
   state.icons = { ...state.icons, [url]: data };
   touch();
   await chrome.storage.local.set({ ['i:' + url]: data });
+}
+
+export async function saveCloth(url, c) {
+  if (state.cloth[url]?.bg === c.bg && state.cloth[url]?.fg === c.fg) return;
+  state.cloth = { ...state.cloth, [url]: c };
+  touch();
+  await chrome.storage.local.set({ ['c:' + url]: c });
 }
 
 export async function clearIcon(url) {
@@ -122,6 +137,6 @@ for (const ev of ['onCreated', 'onRemoved', 'onChanged', 'onMoved', 'onChildrenR
   chrome.bookmarks[ev].addListener(() => reloadTree());
 }
 chrome.storage.onChanged.addListener(changes => {
-  if (Object.keys(changes).every(k => k === 'weekly')) return;
+  if (Object.keys(changes).every(k => k === 'weekly' || k.startsWith('c:'))) return;
   loadStorage();
 });

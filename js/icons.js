@@ -14,13 +14,14 @@ async function sigOf(src) {
 const blankSig = sigOf(favicon('https://shelf-no-icon.invalid/')).catch(() => null);
 
 export async function letterIfBlank(img, letter) {
-  if (img.src.startsWith('data:')) return;
+  if (img.src.startsWith('data:')) return false;
   try {
     const [blank, mine] = await Promise.all([blankSig, sigOf(img.src)]);
-    if (blank && blank === mine) { img.hidden = true; letter.hidden = false; }
+    if (blank && blank === mine) { img.hidden = true; letter.hidden = false; return true; }
   } catch {
     // an icon that won't decode keeps showing whatever chrome gave us
   }
+  return false;
 }
 
 // every image gets squashed to a 64px png so storage stays small
