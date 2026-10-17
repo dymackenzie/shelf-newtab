@@ -8,8 +8,10 @@ import { openSettings } from './settings.js';
 import { panelKind, closePanel } from './panel.js';
 import { watchRibbon } from './ribbon.js';
 import { renderIndex } from './index.js';
+import { applyTheme } from './palette.js';
 
 // render goes first so the card and ribbon see the fresh shelf
+store.subscribe(s => applyTheme(s.settings));
 store.subscribe(render);
 store.subscribe(renderIndex);
 initAdd();
