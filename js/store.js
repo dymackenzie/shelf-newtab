@@ -1,4 +1,4 @@
-import { readTree, folderList, resolve, groupsOf } from './bookmarks.js';
+import { readTree, folderList, resolve, groupsOf, ownFolderPath } from './bookmarks.js';
 import { favicon } from './icons.js';
 
 const DEFAULTS = { folder: '', subShelves: true, ribbon: true, lean: true };
@@ -71,6 +71,11 @@ export async function reloadTree() {
 
 export async function load() {
   await loadStorage();
+  if (!state.settings.folder) {
+    // first run (or coming from v0.2, which showed the bookmarks bar): start on shelf's own empty folder
+    state.settings.folder = await ownFolderPath();
+    await chrome.storage.sync.set({ settings: state.settings });
+  }
   await reloadTree();
 }
 

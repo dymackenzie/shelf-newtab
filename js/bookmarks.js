@@ -32,3 +32,12 @@ export function groupsOf(folder, subShelves) {
   if (!out[0].items.length && out.length > 1) out.shift();
   return out;
 }
+
+// shelf keeps its books in its own folder under Other bookmarks, so they never show on the bookmarks bar
+export async function ownFolderPath() {
+  const root = await readTree();
+  const kids = root.children || [];
+  const other = kids.find(c => c.folderType === 'other') || kids.find(c => c.id === '2') || kids[1];
+  if (!other.children?.some(c => !c.url && c.title === 'Shelf')) await chrome.bookmarks.create({ parentId: other.id, title: 'Shelf' });
+  return `${other.title} / Shelf`;
+}
