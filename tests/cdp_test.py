@@ -1,4 +1,4 @@
-"""Shelf v0.2 tests. Playwright's Chromium, headless, with the unpacked extension and a seeded Bookmarks file.
+"""Shelf v0.5 tests. Playwright's Chromium, headless, with the unpacked extension and a seeded Bookmarks file.
 
 Chromium instead of Chrome because branded Chrome stopped honouring --load-extension in 137, and a
 throwaway Chromium profile never signs into an account, so nothing here can sync anywhere.
@@ -30,6 +30,23 @@ SIZES = [(1440, 900), (1280, 720), (900, 800)]
 FIGMA = {'text/uri-list': 'https://www.figma.com/community', 'text/html': '<a href="https://www.figma.com/community">Figma Community</a>'}
 
 results = []
+
+# a tiny local image host: one image any page may read, one it may only show, so both icon paths run offline
+IMG_PORT = 9352
+IMG = f'http://127.0.0.1:{IMG_PORT}'
+def serve_images():
+    import base64, http.server, threading
+    png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAGElEQVR4nGP4z8BAFmIY1TiqcVTjsNIIAA6x/AFjW9XCAAAAAElFTkSuQmCC')
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path not in ('/cors.png', '/plain.png'): self.send_response(404); self.end_headers(); return
+            self.send_response(200); self.send_header('Content-Type', 'image/png')
+            if self.path == '/cors.png': self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers(); self.wfile.write(png)
+        def log_message(self, *a): pass
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', IMG_PORT), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
 def check(name, ok, detail=''):
     results.append((name, bool(ok)))
     print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"   [{detail}]" if detail != '' else ''), flush=True)
@@ -47,8 +64,10 @@ def seed():
     nid = iter(range(10, 999))
     def url(t, u): return {'type': 'url', 'name': t, 'url': u, 'id': str(next(nid)), 'guid': str(uuid.uuid4()), 'date_added': '13370000000000000'}
     def folder(t, kids, i=None): return {'type': 'folder', 'name': t, 'children': kids, 'id': i or str(next(nid)), 'guid': str(uuid.uuid4()), 'date_added': '13370000000000000', 'date_modified': '0'}
-    bar = [url(*l) for l in LINKS] + [folder('Later', [url(*l) for l in LATER])]
-    data = {'roots': {'bookmark_bar': folder('Bookmarks bar', bar, '1'), 'other': folder('Other bookmarks', [], '2'),
+    # shelf's books live in its own folder; the bar gets one link that must never show up on the shelf
+    shelf = [url(*l) for l in LINKS] + [folder('Later', [url(*l) for l in LATER])]
+    bar = [url('Bar only', 'https://example.com/bar-only')]
+    data = {'roots': {'bookmark_bar': folder('Bookmarks bar', bar, '1'), 'other': folder('Other bookmarks', [folder('Shelf', shelf, '9')], '2'),
                       'synced': folder('Mobile bookmarks', [], '3')}, 'version': 1}
     json.dump(data, open(os.path.join(PROF, 'Default', 'Bookmarks'), 'w'))
 
@@ -110,7 +129,7 @@ window.T = {
     const d = new DataTransfer(); d.items.add(await T.png());
     (el || document.activeElement || document.body).dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: d }));
   },
-  async kids(id = '1') { return (await chrome.bookmarks.getChildren(id)).map(c => ({ id: c.id, title: c.title, url: c.url || null, index: c.index })); },
+  async kids(id = '9') { return (await chrome.bookmarks.getChildren(id)).map(c => ({ id: c.id, title: c.title, url: c.url || null, index: c.index })); },
   vis: el => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden',
   center(el) { const r = el.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; },
 };
@@ -130,13 +149,57 @@ def run(page, cdp, errors):
 
     print('\n# 1 load')
     fonts = ev("Promise.all([...document.fonts].map(f => f.load().then(() => f.family + ':' + f.status, () => f.family + ':fail')))")
-    check('fonts load', len(fonts) == 3 and all(f.endswith(':loaded') for f in fonts), ', '.join(fonts))
+    check('fonts load', len(fonts) == 4 and all(f.endswith(':loaded') for f in fonts), ', '.join(fonts))
     names = ev('T.names()')
     check('seeded books render in order', [n for n in names if n in SEEDED] == SEEDED, ', '.join(names))
     groups = ev("[...document.querySelectorAll('.group')].map(g => (g.querySelector('h2')?.textContent || '-') + ':' + g.querySelectorAll('.book').length)")
     check('Later gets its own labelled shelf', 'Later:2' in groups, ', '.join(groups))
     ribbon = ev("[...document.querySelectorAll('.book')].filter(b => b.querySelector('.ribbon')).map(b => b.querySelector('.nm').textContent)")
     check('ribbon on the most opened book', ribbon == ['Piazza'], ribbon)
+    check('bookmarks bar stays off the shelf', 'Bar only' not in names)
+
+    print('\n# 1b depth')
+    lifted = lambda: ev("T.books().filter(b => getComputedStyle(b.querySelector('.box')).transform !== 'none').map(b => b.querySelector('.nm').textContent)")
+    tilt = lambda: ev("getComputedStyle(document.querySelector('#shelves')).transform")
+    page.mouse.move(5, 5); sleep(700); t1 = tilt()
+    # a real 3D turn blurred every title, so the depth is drawn with flat shapes and nothing on the shelf is 3D
+    three_d = ev("[...document.querySelectorAll('#shelves, #shelves *')].filter(e => getComputedStyle(e).transform.startsWith('matrix3d')).length")
+    check('nothing on the shelf uses a 3D transform (titles stay sharp)', t1 == 'none' and three_d == 0, f'{t1[:30]} / {three_d}')
+    check('every book shows its page edges on top', ev("T.books().every(b => T.vis(b.querySelector('.tp')))"))
+    x, y = ev("T.center(T.book('Calendar'))"); page.mouse.move(x, y); sleep(700)
+    check('hovering lifts just that book', lifted() == ['Calendar'], lifted())
+    check('the shelf stays put when the mouse moves', tilt() == t1)
+    check('a small move inside the spine keeps it lifted', (page.mouse.move(x + 4, y + 30), sleep(300), lifted())[2] == ['Calendar'])
+    page.mouse.move(5, 5); sleep(500)
+    check('moving away sets it back down', lifted() == [])
+    # every point down the middle of every spine has to belong to that book. a tie with the row left dead spots
+    holes = ev("""T.books().flatMap(b => { const r = b.getBoundingClientRect(), x = r.left + r.width / 2, out = [];
+      for (let y = r.top + 8; y < r.bottom - 8; y += 12) if (document.elementFromPoint(x, y)?.closest('.book') !== b) out.push(b.querySelector('.nm').textContent + '@' + Math.round(y - r.top));
+      return out; })""")
+    check('no dead spots on any spine', not holes, holes[:8])
+    ev("document.querySelectorAll('#index li a')[2].dispatchEvent(new MouseEvent('mouseenter'))"); sleep(400)
+    check('hovering a line in the contents lifts its book', lifted() == [ev("T.names()[2]")])
+    ev("document.querySelectorAll('#index li a')[2].dispatchEvent(new MouseEvent('mouseleave'))"); sleep(400)
+    where = ev("chrome.storage.sync.get('settings').then(r => r.settings.folder)")
+    check("shelf reads its own folder by default", where == 'Other bookmarks / Shelf', where)
+    shown = []
+    for i in range(24):
+        if i: page.reload(); sleep(700)
+        p = ev("""(() => { const i = document.querySelector('#index .plate img'), c = document.querySelector('#index figcaption');
+          return { ok: !!i && i.complete && i.naturalWidth > 0, key: document.querySelector('#index .plate').dataset.key, cap: c?.textContent } })()""")
+        if i == 0: check('the painting loads in the contents box with its caption', p['ok'] and p['cap'], p)
+        if not p['ok']: check(f"painting {p['key']} loads", False, p)
+        shown.append(p['key'])
+    n = ev("import('./js/paintings.js').then(m => m.PAINTINGS.length)")
+    check('a different painting on every new tab (never the same twice in a row)', all(x != y for x, y in zip(shown, shown[1:])), shown[:6])
+    check(f'every one of the {n} paintings shows before any repeats', len(set(shown[:n])) == n, f'{len(set(shown[:n]))} distinct in first {n}')
+    sleep(500); ev(HELPERS)  # reloading wiped the test helpers
+
+    sleep(800)
+    cloth = ev("""(async () => { const k = 'c:https://piazza.com/', c = (await chrome.storage.local.get(k))[k];
+      return { c, bg: T.book('Piazza').style.getPropertyValue('--bg') } })()""")
+    check('a visited site dyes its cover from its icon', cloth['c'] and cloth['bg'] == cloth['c']['bg'], cloth)
+    if cloth['c']: check('icon-dyed cover still clears 5:1', ratio(cloth['c']['fg'], cloth['c']['bg']) >= 5, f"{ratio(cloth['c']['fg'], cloth['c']['bg']):.2f}")
 
     # his sizes, so the shots look like his shelf
     ev("""chrome.storage.sync.set({'b:https://calendar.google.com/calendar/u/0/r': {s: 4, ink: 0},
@@ -182,16 +245,17 @@ def run(page, cdp, errors):
         raised: getComputedStyle(T.book('Figma Community')).transform !== 'none' } })()""")
     check('slim card open, name focused and selected', st['open'] and st['focused'] and st['selected'], st)
     check('new book is raised with the ring', st['fresh'] and st['raised'])
-    check('card shows the url, not editable', st['url'] == 'https://www.figma.com/community')
+    check('card shows the url, not editable', st['url'] == 'figma.com/community')
 
     print('\n# 3 paste an image')
     ev('T.paste()'); sleep(800)
     icon = ev("chrome.storage.local.get('i:https://www.figma.com/community').then(r => r['i:https://www.figma.com/community'] || '')")
     check('i:<url> is a png data url', icon.startswith('data:image/png;base64,'), icon[:40])
     check('icon is at most about 12 KB', 0 < len(icon) <= 12 * 1024, f'{len(icon)} bytes')
-    shows = ev("({ book: T.book('Figma Community').querySelector('img').src, well: document.querySelector('#card .well img').src })")
+    shows = ev("({ book: T.book('Figma Community').querySelector('img').src, well: document.querySelector('#card .sq img').src })")
     check('book shows the pasted image', shows['book'] == icon)
-    check('well shows the pasted image', shows['well'] == icon)
+    check('icon square shows the pasted image', shows['well'] == icon)
+    check('preview book shows it too', ev("document.querySelector('#card .mini img').src") == icon)
 
     print('\n# 4 undo and esc')
     ev("document.querySelector('#card .undo').click()"); sleep(800)
@@ -237,35 +301,45 @@ def run(page, cdp, errors):
     key('Escape')
     check('Esc removes the ghost', not ev("!!document.querySelector('.book.ghost') || T.vis(document.querySelector('#card'))"))
 
-    print('\n# 6 image well')
+    print('\n# 6 icon from a file or an image address')
     ev("document.querySelector('#add').click()"); sleep(400)
-    ev("""async () => { const d = new DataTransfer(); d.items.add(await T.png()); const w = document.querySelector('#card .well');
-      const [x, y] = T.center(w); T.fire('dragover', x, y, d, w); T.fire('drop', x, y, d, w); }""")
+    ev('''async () => { const d = new DataTransfer(); d.items.add(await T.png()); const c = document.querySelector('#card');
+      const [x, y] = T.center(c); T.fire('dragover', x, y, d, c); T.fire('drop', x, y, d, c); }''')
     sleep(600)
-    check('dropping a file on the well sets the image', ev("document.querySelector('#card .well img').src.startsWith('data:image/png')"))
-    ev("() => { window.__fetches = []; const f0 = window.fetch; window.fetch = (...a) => { window.__fetches.push(String(a[0])); return f0(...a); }; }")
-    ev("""() => { const w = document.querySelector('#card .well'), [x, y] = T.center(w);
-      const d = T.dt({ 'text/uri-list': 'https://example.com/cat.png', 'text/html': '<img src="https://example.com/cat.png">' });
-      T.fire('dragover', x, y, d, w); T.fire('drop', x, y, d, w); }""")
-    sleep(800)
-    w6 = ev("""(() => { const w = document.querySelector('#card .well'), b = w.querySelector('.allow');
-      return { mode: w.dataset.mode, allow: T.vis(b) ? b.textContent : null, note: T.vis(w.querySelector('.note')), fetches: window.__fetches.length } })()""")
-    check('web image: well shows "Allow images from websites"', w6['allow'] == 'Allow images from websites' and not w6['note'], w6)
-    check('web image: no fetch without permission', w6['fetches'] == 0, w6['fetches'])
-    check('host permission is still not granted', not ev("chrome.permissions.contains({ origins: ['https://example.com/*'] })"))
-    shot('1440x900-5-allow-images.png')
-    key('Escape')
-    check('web image drop did not add a book', 'Example' not in ev('T.names()') and not ev("!!document.querySelector('.book.ghost')"))
+    check('dropping a file on the card sets the icon', ev("document.querySelector('#card .sq img').src.startsWith('data:image/png')"))
+    def address(u):
+        ev(f'''(() => {{ const i = document.querySelector('#card .iconaddr'); i.value = '{u}'; i.dispatchEvent(new Event('input', {{ bubbles: true }})); }})()''')
+        sleep(1500)
+        return ev("({ status: document.querySelector('#card .status').textContent, src: document.querySelector('#card .sq img').src, mini: document.querySelector('#card .mini img').src })")
+    got = address(f'{IMG}/cors.png')
+    check('an image address that allows it gets copied', got['status'] == 'Copied.' and got['src'].startswith('data:image/png') and got['mini'] == got['src'], got)
+    got = address(f'{IMG}/plain.png')
+    check("one that doesn't is linked, with Keep a copy", got['status'].startswith('Linked, not copied.') and got['src'] == f'{IMG}/plain.png'
+          and ev("!!document.querySelector('#card .status .keep')"), got)
+    check('linking asks for no permission', not ev(f"chrome.permissions.contains({{ origins: ['{IMG}/*'] }})"))
+    shot('1440x900-5-image-address.png')
+    got = address(f'{IMG}/nope.png')
+    check('a dead address says so', "didn't open as an image" in got['status'], got)
+    got = address(f'{IMG}/plain.png'.replace('http://', ''))
+    check('an address without https:// still works', got['src'] == f'{IMG}/plain.png' or got['src'].startswith('data:'), got)
+    ev("document.querySelector('#card .address').value = 'linked.example'; document.querySelector('#card .address').dispatchEvent(new Event('input', { bubbles: true }))")
+    sleep(600)
+    ev("document.querySelector('#card .primary').click()"); sleep(1000)
+    linked = ev("chrome.storage.local.get('i:https://linked.example/').then(r => r['i:https://linked.example/'] || '')")
+    check('Done keeps a linked icon as its address', linked == f'{IMG}/plain.png', linked)
+    check('the new book shows the linked icon', ev(f"T.books().some(b => b.querySelector('img').src === '{IMG}/plain.png')"))
+    check('a dropped web image does not add a book', 'Example' not in ev('T.names()') and not ev("!!document.querySelector('.book.ghost')"))
 
     print('\n# 7 settings')
     ev("document.querySelector('#gear').click()"); sleep(400)
     txt = ev("[...document.querySelectorAll('#panel h3, #panel .sentence')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
-    check('panel reads as written', txt[0] == 'Shelf' and txt[2:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean']
-          and txt[1].startswith('Show') and txt[1].endswith('on the shelf.'), txt)
-    check('title is Fraunces', 'Fraunces' in ev("getComputedStyle(document.querySelector('#panel h3')).fontFamily"))
+    check('panel reads as written', txt[0] == 'Shelf' and txt[1].startswith('Show') and txt[1].endswith('on the shelf.')
+          and txt[2] == 'The paper is' and txt[3] == 'The accent is'
+          and txt[4:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean', 'Show a painting in the contents', 'Give the paper a fine grain'], txt)
+    check('title is Archivo, like the top bar', 'Archivo' in ev("getComputedStyle(document.querySelector('#panel h3')).fontFamily"))
     check('each sentence sits on one line', ev("[...document.querySelectorAll('#panel .sentence')].every(l => l.getBoundingClientRect().height < 2.6 * parseFloat(getComputedStyle(l).fontSize))"))
-    sw = ev("[...document.querySelectorAll('#panel input')].map(i => i.type + ':' + i.getAttribute('role') + ':' + i.checked + ':' + (i.closest('label.sentence') ? 'label' : '-'))")
-    check('three real switches inside their sentence labels, on by default', sw == ['checkbox:switch:true:label'] * 3, sw)
+    sw = ev("[...document.querySelectorAll('#panel input[role=switch]')].map(i => i.type + ':' + i.checked + ':' + (i.closest('label.sentence') ? 'label' : '-'))")
+    check('five real switches inside their sentence labels, on by default', sw == ['checkbox:true:label'] * 5, sw)
     before = ev('T.names()')
     for k in ('subShelves', 'ribbon', 'lean'):
         x, y = ev(f"T.center(document.querySelector('#panel input[data-key={k}]').previousElementSibling)")
@@ -281,26 +355,78 @@ def run(page, cdp, errors):
         check(f'{k} back on', ev(f"chrome.storage.sync.get('settings').then(r => r.settings['{k}'])") is True)
     check('subfolder shelves on again', ev("document.querySelectorAll('#shelves h2').length") == 1)
     check('ribbon back after turning it on', ev("document.querySelectorAll('.ribbon').length") == 1)
-    page.select_option('#s-folder', 'Bookmarks bar / Later'); sleep(600)
+    page.select_option('#s-folder', 'Other bookmarks / Shelf / Later'); sleep(600)
     check('changing the folder re-renders the shelf', ev('T.names()') == ['Are.na', 'recent.design'])
     stored = ev("chrome.storage.sync.get('settings').then(r => r.settings.folder)")
-    check('folder persists by path', stored == 'Bookmarks bar / Later', stored)
-    page.select_option('#s-folder', 'Bookmarks bar'); sleep(600)
+    check('folder persists by path', stored == 'Other bookmarks / Shelf / Later', stored)
+    page.select_option('#s-folder', 'Other bookmarks / Shelf'); sleep(600)
     page.focus('#s-folder')
     order = []
-    for _ in range(3):
+    for _ in range(18):  # 7 papers, the picker, 5 accents, 5 switches
         key('Tab')
-        order.append(ev("document.activeElement.dataset.key || document.activeElement.id"))
-    check('Tab walks the three switches after the select', order == ['subShelves', 'ribbon', 'lean'], order)
+        order.append(ev("document.activeElement.dataset.key || document.activeElement.dataset.v || document.activeElement.type || document.activeElement.id"))
+    check('Tab walks the colours, then the switches', order[:7] == ['putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-5:] == ['subShelves', 'ribbon', 'lean', 'painting', 'grain'], order)
     key('Space')
     check('Space toggles the focused switch', ev("!document.activeElement.checked"))
     key('Space')
+
+    print('\n# 7b colours')
+    rgb = lambda v: ev(f"getComputedStyle(document.documentElement).getPropertyValue('{v}').trim()")
+    ev("document.querySelector('#panel .dot[data-v=night]').click()"); sleep(500)
+    st = ev("chrome.storage.sync.get('settings').then(r => r.settings.paper)")
+    check('picking Night paper saves it and repaints the page', st == 'night' and rgb('--ground') == '#1B2027'
+          and ev("getComputedStyle(document.body).backgroundColor") == 'rgb(27, 32, 39)', (st, rgb('--ground')))
+    check('dark paper flips the text light', rgb('--text') == '#EDE8DC' and rgb('color-scheme') == 'dark')
+    shot('1440x900-7-night.png')
+    page.reload(); sleep(150)
+    early = ev("document.documentElement.style.getPropertyValue('--ground')")
+    check('a new tab opens straight in the saved paper (no flash of the default)', early == '#1B2027', early)
+    sleep(900); ev(HELPERS)
+    ev("document.querySelector('#gear').click()"); sleep(400)
+    ev("""(() => { const i = document.querySelector('#panel .dot.own input'); i.value = '#a4c9e8'; i.dispatchEvent(new Event('input', { bubbles: true })); })()""")
+    sleep(700)
+    st = ev("chrome.storage.sync.get('settings').then(r => r.settings.paper)")
+    check('any colour from the picker becomes the paper', st == '#a4c9e8' and rgb('--ground') == '#A4C9E8', (st, rgb('--ground')))
+    check('the picker dot is the one marked', ev("document.querySelector('#panel .dot.own').classList.contains('on') && document.querySelectorAll('#panel .dots .dot.on').length === 2"))
+    ev("document.querySelector('#panel .dot[data-v=cobalt]').click()"); sleep(400)
+    check('picking an accent repaints the ribbon', rgb('--accent') == '#2F4BE0' and ev("getComputedStyle(document.querySelector('.ribbon')).backgroundColor") == 'rgb(47, 75, 224)')
+    # every preset, and a spread of odd custom papers, must keep all text at 5:1
+    bad = ev("""import('./js/palette.js').then(m => {
+      const papers = [...m.PAPERS.map(p => p[0]), '#ffffff', '#000000', '#ff0000', '#ffff00', '#00ff88', '#7a7a7a', '#5b3c88', '#c08040', '#e0e0ff', '#202020'];
+      const out = [];
+      for (const paper of papers) for (const [accent] of m.ACCENTS) {
+        const v = m.derive({ paper, accent });
+        for (const [fg, bg] of [['--text', '--ground'], ['--text', '--card'], ['--dim', '--ground'], ['--dim', '--card'], ['--dim', '--field'], ['--accent-text', '--ground'], ['--accent-text', '--card']]) {
+          const r = m.ratio(v[fg], v[bg]); if (r < 5) out.push(`${paper}/${accent} ${fg} on ${bg} ${r.toFixed(2)}`);
+        }
+      }
+      return out; })""")
+    check('every paper and accent keeps text at 5:1, custom papers too', not bad, bad[:6])
+    ev("document.querySelector('#panel input[data-key=painting]').click()"); sleep(400)
+    check('painting switch hides the plate', not ev("!!document.querySelector('#index .plate')") and 'null' not in ev("document.querySelector('#index').textContent"))
+    ev("document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
+    check('grain switch turns the grain off', rgb('--grain') == '0')
+    ev("document.querySelector('#panel input[data-key=painting]').click(); document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
+    ev("document.querySelector('#panel .dot[data-v=putty]').click()"); sleep(200)
+    ev("document.querySelector('#panel .dot[data-v=magenta]').click()"); sleep(400)
+    check('back to putty and magenta', rgb('--ground') == '#DDDDD1' and rgb('--accent') == '#E2187F')
+    ev("document.querySelector('#panel input[data-key=lean]').focus()")
     key('Escape')
     esc = ev("({ open: !document.querySelector('#panel').hidden, focus: document.activeElement.id })")
     check('Esc closes settings and focus returns to the gear', not esc['open'] and esc['focus'] == 'gear', esc)
 
     print('\n# 8 edit mode')
     ev("document.querySelector('#edit').click()"); sleep(400)
+    # a drag that starts on text (a selected title) has a text node as its target. it used to throw
+    before_err = len(errors)
+    marked = ev("""() => { const txt = T.book('Docs').querySelector('.nm').firstChild, d = new DataTransfer();
+      txt.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: d }));
+      const on = T.book('Docs').classList.contains('dragging');
+      document.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: d }));
+      return { text: txt.nodeType === 3, on }; }""")
+    sleep(300)
+    check('a drag starting on text does not throw', marked['text'] and len(errors) == before_err, errors[before_err:])
+    check('and it still drags that book', marked['on'], marked)
     ev("""() => { const src = T.book('Claude'), dst = T.book('Calendar'), d = new DataTransfer();
       const r = dst.getBoundingClientRect(), x = r.left + 4, y = r.top + r.height / 2;
       src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: d }));
@@ -311,15 +437,15 @@ def run(page, cdp, errors):
     check('dragging a book moves the real bookmark', order.index('Claude') + 1 == order.index('Calendar'), order[:4])
     check('the shelf follows', ev('T.names()')[:2] == ['Claude', 'Calendar'])
     ev("T.book('Docs').click()"); sleep(400)
-    check('book panel has an image well', ev("T.vis(document.querySelector('#panel .well'))"))
+    check('book panel has the icon field', ev("T.vis(document.querySelector('#panel .sq')) && T.vis(document.querySelector('#panel .iconaddr'))"))
     lay = ev("""(() => { const p = document.querySelector('#panel'), r = p.getBoundingClientRect(), n = document.querySelector('#p-name').getBoundingClientRect();
       const done = p.querySelector('.actions .primary').getBoundingClientRect(), rm = p.querySelector('.actions .danger').getBoundingClientRect();
       return { notBook: !p.matches('.book'), fullInput: n.width > r.width * 0.8, apart: rm.right <= done.left, left: getComputedStyle(p.querySelector('.lb')).textAlign } })()""")
     check('book panel lays out as a form (inputs full width, Remove and Done apart)', lay['notBook'] and lay['fullInput'] and lay['apart'], lay)
     ev('T.paste()'); sleep(800)
     docs = ev("""async () => { const k = 'i:https://docs.google.com/document/u/0/', v = (await chrome.storage.local.get(k))[k] || '';
-      return { stored: v.slice(0, 22), same: document.querySelector('#panel .well img').src === v && T.book('Docs').querySelector('img').src === v } }""")
-    check('book panel well takes a pasted image', docs['stored'] == 'data:image/png;base64,' and docs['same'], docs)
+      return { stored: v.slice(0, 22), same: document.querySelector('#panel .sq img').src === v && T.book('Docs').querySelector('img').src === v } }""")
+    check('book panel icon field takes a pasted image', docs['stored'] == 'data:image/png;base64,' and docs['same'], docs)
     shot('1440x900-6-edit-panel.png')
     key('Escape'); key('Escape')
     check('Esc leaves edit mode', not ev("document.body.classList.contains('editing')"))
@@ -337,6 +463,7 @@ def run(page, cdp, errors):
 
 def main():
     shutil.rmtree(SHOTS, ignore_errors=True)
+    serve_images()
     os.makedirs(SHOTS)
     seed()
     exe = chromium()
@@ -367,7 +494,11 @@ def main():
 
             page = ctx.new_page()
             errors = []
-            page.on('console', lambda m: m.type in ('error', 'warning') and errors.append(f'{m.type}: {m.text} @ {m.location}'))
+            # the dead and no-copy test images log network errors on purpose; anything else still fails the run
+            def on_console(m):
+                if m.type in ('error', 'warning') and IMG not in m.text and IMG not in str(m.location.get('url', '')):
+                    errors.append(f'{m.type}: {m.text} @ {m.location}')
+            page.on('console', on_console)
             page.on('pageerror', lambda e: errors.append(f'exception: {e}'))
             page.set_viewport_size({'width': 1440, 'height': 900})
             cdp = ctx.new_cdp_session(page)
