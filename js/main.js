@@ -1,4 +1,4 @@
-import { $ } from './dom.js';
+import { $, h } from './dom.js';
 import * as store from './store.js';
 import { render } from './shelf.js';
 import { initReorder } from './reorder.js';
@@ -7,9 +7,11 @@ import { openBookPanel } from './bookpanel.js';
 import { openSettings } from './settings.js';
 import { panelKind, closePanel } from './panel.js';
 import { watchRibbon } from './ribbon.js';
+import { renderIndex } from './index.js';
 
 // render goes first so the card and ribbon see the fresh shelf
 store.subscribe(render);
+store.subscribe(renderIndex);
 initAdd();
 initReorder();
 watchRibbon();
@@ -63,7 +65,9 @@ let resizeT;
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(store.touch, 80); });
 
 const setDate = () => {
-  $('#date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  const d = new Date();
+  $('#date').replaceChildren(h('em', {}, d.toLocaleDateString(undefined, { weekday: 'long' })), ' ',
+    d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }));
 };
 setDate();
 setInterval(setDate, 60e3);
