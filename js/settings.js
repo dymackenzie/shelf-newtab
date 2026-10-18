@@ -7,6 +7,7 @@ const SWITCHES = [
   ['subShelves', 'Give each subfolder its own shelf'],
   ['ribbon', 'Put a ribbon on the book I open most'],
   ['lean', 'Let the last book lean'],
+  ['contents', 'Show the contents beside the shelf'],
   ['painting', 'Show a painting in the contents'],
   ['grain', 'Give the paper a fine grain'],
 ];

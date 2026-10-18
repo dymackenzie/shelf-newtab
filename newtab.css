@@ -290,6 +290,11 @@ main { margin-top: 5vh; }
   h1 { display: block; }
   main { margin-top: 1.2rem; }
 }
+/* contents switched off in settings: same as the narrow layout */
+.no-index .page { display: block; width: min(66rem, 100% - 6rem); }
+.no-index .index { display: none; }
+.no-index h1 { display: block; }
+.no-index main { margin-top: 1.2rem; }
 
 @media (prefers-reduced-motion: no-preference) {
   .book { transition: transform .16s ease-out; }

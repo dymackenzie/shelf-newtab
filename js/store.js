@@ -1,7 +1,7 @@
 import { readTree, folderList, resolve, groupsOf, ownFolderPath } from './bookmarks.js';
 import { favicon } from './icons.js';
 
-const DEFAULTS = { folder: '', subShelves: true, ribbon: true, lean: true, paper: 'putty', accent: 'magenta', grain: true, painting: true };
+const DEFAULTS = { folder: '', subShelves: true, ribbon: true, lean: true, paper: 'putty', accent: 'magenta', grain: true, painting: true, contents: true };
 
 const state = {
   settings: { ...DEFAULTS },
