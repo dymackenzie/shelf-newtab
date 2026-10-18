@@ -298,6 +298,14 @@ main { margin-top: 5vh; }
 /* no date: the shelf moves up into its place */
 .no-date #date { display: none; }
 .no-date main { margin-top: 5vh; }
+/* and with no contents either, the shelves sit in the middle of the window. the bottom padding
+   makes up for the header and the empty room above each row, plus a little lift so it doesn't read low */
+.no-date.no-index .col { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 5rem); }
+.no-date.no-index main { margin-top: 0; padding-bottom: 9rem; }
+@media (max-width: 1000px) {
+  .no-date .col { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 5rem); }
+  .no-date main { margin-top: 0; padding-bottom: 9rem; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .book { transition: transform .16s ease-out; }

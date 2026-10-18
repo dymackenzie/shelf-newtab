@@ -417,6 +417,10 @@ def run(page, cdp, errors):
     ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
     both = ev("({ h1: getComputedStyle(document.querySelector('#date')).display, box: getComputedStyle(document.querySelector('#index')).display, cached: localStorage.getItem('shelf:hide') })")
     check('date and contents both off: no big date either, just the shelf', both['h1'] == 'none' and both['box'] == 'none' and both['cached'] == 'no-index no-date', both)
+    gap = ev("""(() => { const tops = [...document.querySelectorAll('.book')].map(b => b.getBoundingClientRect().top);
+      const planks = [...document.querySelectorAll('.plank')]; const end = planks[planks.length - 1].getBoundingClientRect().bottom;
+      return { above: Math.round(Math.min(...tops)), below: Math.round(innerHeight - end), scrolls: document.documentElement.scrollHeight > innerHeight } })()""")
+    check('with neither, the shelves sit in the middle of the window, no scrollbar', abs(gap['above'] - gap['below']) < 0.15 * ev('innerHeight') and not gap['scrolls'], gap)
     ev("document.querySelector('#panel input[data-key=contents]').click(); document.querySelector('#panel input[data-key=date]').click()"); sleep(400)
     check('date back in the contents', ev("!!document.querySelector('#index .ttl')") and ev("localStorage.getItem('shelf:hide')") == '')
     ev("document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)

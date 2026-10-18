@@ -1,6 +1,6 @@
 """Quick screenshots of the shelf at 1440 and 900, plus settings, edit panel and add card with `states`.
 Same profile setup as cdp_test.py.
-    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [states]
+    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [states] [nocontents] [nodate] [flat]
 """
 import os, subprocess, sys, time, urllib.request
 from playwright.sync_api import sync_playwright
@@ -54,6 +54,9 @@ def main():
             page.evaluate("""chrome.storage.sync.set({'b:https://calendar.google.com/calendar/u/0/r': {s: 4},
               'b:https://www.notion.so/': {s: 3}, 'b:https://canvas.ubc.ca/': {s: 4}, 'b:https://claude.ai/new': {s: 3},
               'b:https://www.wikipedia.org/': {s: 4}, 'b:https://open.spotify.com/': {s: 3}, 'b:https://recent.design/': {s: 3}}).then(() => 1)""")
+            off = {k: False for k, flag in (('contents', 'nocontents'), ('date', 'nodate'), ('subShelves', 'flat')) if flag in sys.argv}
+            if off:  # parts switched off in settings
+                page.evaluate("off => chrome.storage.sync.get('settings').then(r => chrome.storage.sync.set({ settings: { ...r.settings, ...off } })).then(() => 1)", off)
             page.reload(); page.wait_for_timeout(2500); page.evaluate(HELPERS)
             page.wait_for_timeout(1000)
             if 'fresh' in sys.argv:
@@ -66,6 +69,9 @@ def main():
                     page.wait_for_timeout(700)
                     over = page.evaluate('document.documentElement.scrollWidth > innerWidth')
                     p = os.path.join(OUT, f'{look}-{w}.png'); page.screenshot(path=p); print(p, 'OVERFLOW' if over else '')
+                    print('  gaps:', page.evaluate("""(() => { const t = Math.min(...[...document.querySelectorAll('.book')].map(b => b.getBoundingClientRect().top));
+                      const pl = [...document.querySelectorAll('.plank')].pop().getBoundingClientRect().bottom;
+                      return { above: Math.round(t), below: Math.round(innerHeight - pl), scrolls: document.documentElement.scrollHeight > innerHeight } })()"""))
                 if 'hover' in sys.argv:
                     # hover a book with the real mouse, then once more from the index, and shoot both
                     page.set_viewport_size({'width': 1440, 'height': 900}); page.wait_for_timeout(300)
