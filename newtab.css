@@ -295,6 +295,9 @@ main { margin-top: 5vh; }
 .no-index .index { display: none; }
 .no-index h1 { display: block; }
 .no-index main { margin-top: 1.2rem; }
+/* no date: the shelf moves up into its place */
+.no-date #date { display: none; }
+.no-date main { margin-top: 5vh; }
 
 @media (prefers-reduced-motion: no-preference) {
   .book { transition: transform .16s ease-out; }

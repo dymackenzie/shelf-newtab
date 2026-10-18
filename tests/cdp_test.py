@@ -335,11 +335,11 @@ def run(page, cdp, errors):
     txt = ev("[...document.querySelectorAll('#panel h3, #panel .sentence')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
     check('panel reads as written', txt[0] == 'Shelf' and txt[1].startswith('Show') and txt[1].endswith('on the shelf.')
           and txt[2] == 'The paper is' and txt[3] == 'The accent is'
-          and txt[4:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean', 'Show the contents beside the shelf', 'Show a painting in the contents', 'Give the paper a fine grain'], txt)
+          and txt[4:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean', 'Show the date', 'Show the contents beside the shelf', 'Show a painting in the contents', 'Give the paper a fine grain'], txt)
     check('title is Archivo, like the top bar', 'Archivo' in ev("getComputedStyle(document.querySelector('#panel h3')).fontFamily"))
     check('each sentence sits on one line', ev("[...document.querySelectorAll('#panel .sentence')].every(l => l.getBoundingClientRect().height < 2.6 * parseFloat(getComputedStyle(l).fontSize))"))
     sw = ev("[...document.querySelectorAll('#panel input[role=switch]')].map(i => i.type + ':' + i.checked + ':' + (i.closest('label.sentence') ? 'label' : '-'))")
-    check('six real switches inside their sentence labels, on by default', sw == ['checkbox:true:label'] * 6, sw)
+    check('seven real switches inside their sentence labels, on by default', sw == ['checkbox:true:label'] * 7, sw)
     before = ev('T.names()')
     for k in ('subShelves', 'ribbon', 'lean'):
         x, y = ev(f"T.center(document.querySelector('#panel input[data-key={k}]').previousElementSibling)")
@@ -362,10 +362,10 @@ def run(page, cdp, errors):
     page.select_option('#s-folder', 'Other bookmarks / Shelf'); sleep(600)
     page.focus('#s-folder')
     order = []
-    for _ in range(19):  # 7 papers, the picker, 5 accents, 6 switches
+    for _ in range(20):  # 7 papers, the picker, 5 accents, 7 switches
         key('Tab')
         order.append(ev("document.activeElement.dataset.key || document.activeElement.dataset.v || document.activeElement.type || document.activeElement.id"))
-    check('Tab walks the colours, then the switches', order[:7] == ['putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-6:] == ['subShelves', 'ribbon', 'lean', 'contents', 'painting', 'grain'], order)
+    check('Tab walks the colours, then the switches', order[:7] == ['putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-7:] == ['subShelves', 'ribbon', 'lean', 'date', 'contents', 'painting', 'grain'], order)
     key('Space')
     check('Space toggles the focused switch', ev("!document.activeElement.checked"))
     key('Space')
@@ -411,6 +411,14 @@ def run(page, cdp, errors):
     check('nothing spills sideways without the contents', not ev('document.documentElement.scrollWidth > innerWidth'))
     ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
     check('contents back on', ev("getComputedStyle(document.querySelector('#index')).display") == 'block' and ev("document.querySelectorAll('#index li a').length") > 0 and ev("localStorage.getItem('shelf:hide')") == '')
+    ev("document.querySelector('#panel input[data-key=date]').click()"); sleep(400)
+    check('date switch takes the date out of the contents, the count stays', not ev("!!document.querySelector('#index .ttl')") and ev("!!document.querySelector('#index .sub')"))
+    check('date off persists and is cached for the next tab', ev("chrome.storage.sync.get('settings').then(r => r.settings.date)") is False and ev("localStorage.getItem('shelf:hide')") == 'no-date')
+    ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
+    both = ev("({ h1: getComputedStyle(document.querySelector('#date')).display, box: getComputedStyle(document.querySelector('#index')).display, cached: localStorage.getItem('shelf:hide') })")
+    check('date and contents both off: no big date either, just the shelf', both['h1'] == 'none' and both['box'] == 'none' and both['cached'] == 'no-index no-date', both)
+    ev("document.querySelector('#panel input[data-key=contents]').click(); document.querySelector('#panel input[data-key=date]').click()"); sleep(400)
+    check('date back in the contents', ev("!!document.querySelector('#index .ttl')") and ev("localStorage.getItem('shelf:hide')") == '')
     ev("document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
     check('grain switch turns the grain off', rgb('--grain') == '0')
     ev("document.querySelector('#panel input[data-key=painting]').click(); document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)

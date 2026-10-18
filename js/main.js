@@ -12,7 +12,7 @@ import { applyTheme } from './palette.js';
 
 // switched-off parts hide by a class on <html>. boot.js puts them back before paint so new tabs don't flash them
 store.subscribe(s => {
-  const hide = [['no-index', !s.settings.contents]];
+  const hide = [['no-index', !s.settings.contents], ['no-date', !s.settings.date]];
   for (const [c, on] of hide) document.documentElement.classList.toggle(c, on);
   localStorage.setItem('shelf:hide', hide.filter(x => x[1]).map(x => x[0]).join(' '));
 });

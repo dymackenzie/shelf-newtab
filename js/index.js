@@ -37,7 +37,7 @@ export function renderIndex(s) {
   const count = s.books.length;
   box.replaceChildren(
     ...(s.settings.painting ? [platePicked()] : []),
-    h('p', { class: 'ttl' }, h('em', {}, d.toLocaleDateString(undefined, { weekday: 'long' })), ' ', d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })),
+    ...(s.settings.date ? [h('p', { class: 'ttl' }, h('em', {}, d.toLocaleDateString(undefined, { weekday: 'long' })), ' ', d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }))] : []),
     h('p', { class: 'sub' }, count ? `${count} book${count === 1 ? '' : 's'} on the shelf.` : 'No books yet.'),
     ...(count ? [h('ol', {}, items)] : []));
 }
