@@ -9,6 +9,9 @@ import { panelKind, closePanel } from './panel.js';
 import { watchRibbon } from './ribbon.js';
 import { renderIndex } from './index.js';
 import { applyTheme } from './palette.js';
+import { reveal, decoded } from './intro.js';
+import { iconsSettled } from './shelf.js';
+import { ribbonPlaced } from './ribbon.js';
 
 // switched-off parts hide by a class on <html>. boot.js puts them back before paint so new tabs don't flash them
 store.subscribe(s => {
@@ -81,3 +84,7 @@ setDate();
 setInterval(setDate, 60e3);
 
 await store.load();
+// wait for the render store.load queued (and the one the ribbon queues), then open the page in one go
+await Promise.race([ribbonPlaced, new Promise(r => setTimeout(r, 400))]);
+await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+reveal(iconsSettled(), decoded(document.body));

@@ -144,10 +144,34 @@ main { margin-top: 1.2rem; padding-bottom: 8rem; }
 :is(.book, .mini) .chip { width: 1.55rem; height: 1.55rem; flex: none; margin: auto 0 .65rem; display: grid; place-items: center; }
 :is(.book, .mini) .chip img { width: 1.55rem; height: 1.55rem; display: block; object-fit: contain; border-radius: .25rem; }
 .letter { font: 500 1.15rem/1 var(--serif); color: currentColor; }
-.ribbon { /* peeks out of the top like a real bookmark */
-  position: absolute; top: -1.6rem; right: .4rem; width: .75rem; height: 2.6rem; background: var(--accent); z-index: 1;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+/* the ribbon is a book's own silk marker, so it gets the same treatment as the cloth: the accent dyed a little
+   deeper, fine grosgrain ribs, light down one edge, and a soft shadow. the clip cuts the end on the strip, so
+   the shadow sits on the wrapper (a clip would cut the shadow off too) */
+.ribbon {
+  --silk: color-mix(in oklab, var(--accent) 82%, #2A1216);
+  position: absolute; z-index: 1; width: .62rem; pointer-events: none;
+  filter: drop-shadow(.08rem .07rem .05rem rgba(var(--shadow), .45));
 }
+.ribbon::before, .ribbon::after {
+  content: none; position: absolute;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .08) 0 1px, rgba(0, 0, 0, .08) 1px 2px),
+    linear-gradient(90deg, rgba(0, 0, 0, .26), rgba(255, 255, 255, .16) 28%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, .3)),
+    var(--silk);
+}
+/* A: comes up out of the pages, end cut in a V, leaning a little the way loose silk does */
+[data-ribbon=a] .ribbon { left: calc(58% + var(--dx) / 2); bottom: calc(100% + var(--dy) / 2 - .05rem); height: 1.75rem; transform-origin: 50% 100%; transform: rotate(6deg); }
+[data-ribbon=a] .ribbon::before { content: ""; inset: 0; clip-path: polygon(0 0, 50% 16%, 100% 0, 100% 100%, 0 100%); }
+/* B: out of the pages, over the head of the spine and down its front */
+[data-ribbon=b] .ribbon { top: -.06rem; right: .5rem; height: 3.6rem; }
+[data-ribbon=b] .ribbon::after { content: ""; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%); }
+[data-ribbon=b] .ribbon::before {
+  content: ""; left: 0; bottom: 100%; width: 100%; height: calc(var(--dy) / 2 + .06rem);
+  transform-origin: bottom left; transform: skewX(var(--skew-x)); filter: brightness(1.2);
+}
+/* C: the tail hangs out the bottom and over the front of the shelf */
+[data-ribbon=c] .ribbon { top: calc(100% - .1rem); left: 56%; height: 2.5rem; }
+[data-ribbon=c] .ribbon::before { content: ""; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%); }
 
 /* edit mode: no wobble, just a grab cursor */
 body.editing .book { cursor: grab; }
@@ -312,3 +336,19 @@ main { margin-top: 5vh; }
   .box { transition: transform .16s ease-out; }
   input[role=switch]::before { transition: transform .12s ease-out; }
 }
+
+/* opening: hidden until intro.js has the fonts and books, then the text comes up, the shelf fades in and the
+   books go on left to right. --late is how far into the opening a re-render lands, so rebuilt books don't restart */
+.wait .top, .wait .page { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .intro .top, .intro .index, .intro #date { animation: rise .6s cubic-bezier(.2, .6, .2, 1) backwards; }
+  .intro .index { animation-delay: 80ms; }
+  .intro .plank, .intro .group h2, .intro .empty { animation: fade .6s ease-out backwards; animation-delay: calc(var(--late, 0ms) + 150ms); }
+  .intro .book .box { animation: shelve .5s cubic-bezier(.2, .6, .2, 1) backwards; animation-delay: calc(var(--late, 0ms) + 320ms + var(--i, 0) * var(--step, 45ms)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro .top, .intro .page { animation: fade .3s ease-out backwards; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(.5rem); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes shelve { from { opacity: 0; transform: translateY(-.6rem); } }

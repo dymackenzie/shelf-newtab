@@ -22,6 +22,10 @@ async function weeklyTop(books) {
   return top;
 }
 
+// resolves once the ribbon is on its book (from last count), so the page can open with it already there
+let placed;
+export const ribbonPlaced = new Promise(r => { placed = r; });
+
 // recount whenever the ribbon setting flips, using the 30 minute cache in between
 export function watchRibbon() {
   let on = null;
@@ -29,12 +33,14 @@ export function watchRibbon() {
     if (!s.folder || s.settings.ribbon === on) return;
     on = s.settings.ribbon;
     if (!on) {
+      placed();
       store.setTop(null);
       await chrome.storage.local.remove('weekly');
       return;
     }
     const { weekly } = await chrome.storage.local.get('weekly');
     if (weekly) store.setTop(weekly.top);
+    placed();
     store.setTop(await weeklyTop(s.books));
   });
 }
