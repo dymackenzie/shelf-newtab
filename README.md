@@ -1,56 +1,63 @@
 # Shelf
 
-A shelf of books on the new tab page, separate from your bookmarks bar. Light putty paper so it sits with Chrome's light toolbar; ground sampled from Shopify Editions, spines after Grokipedia's shelf.
+Shelf turns Chrome's new tab page into a bookshelf, where every link is a book with its cover dyed from the site's icon. The books live in their own bookmark folder, so your bookmarks bar stays the way it is. The putty paper is sampled from Shopify Editions and the spines are after Grokipedia's shelf.
 
-![The shelf in 3D](docs/shelf-3d.png)
+![Shelf in 3D](docs/shelf-3d.png)
 
-The same shelf in 2D, which you can switch to in Settings:
+## Main features
 
-![The shelf in 2D](docs/shelf-2d.png)
+- Every link is a book, coloured from its site's icon
+- Drag any link onto the shelf to add it
+- A 3D shelf with cloth spines, or a flat 2D one
+- Nine papers (or any colour) and five accents
+- A ribbon on the site you open the most
 
 ## Install
 
-1. Open `chrome://extensions` and turn on **Developer mode** (top right).
-2. Click **Load unpacked** and choose this folder.
-3. Open a new tab. If Chrome asks whether to keep the change, keep it.
+It isn't on the Chrome Web Store, so it gets loaded as an unpacked extension.
 
-This also works in Edge, Brave and Arc. The manifest has a fixed `key`, so the extension ID stays the same on every computer and your spine heights and inks sync through your Chrome account.
+1. Download this repo with **Code** > **Download ZIP** and unzip it somewhere it can stay, because Chrome reads it from that folder every time (mine sits in `C:\dev\personal\shelf-newtab`).
+2. In `chrome://extensions` there's a **Developer mode** toggle in the top right corner, turn that on.
+3. Then click **Load unpacked** and pick the unzipped folder.
+4. Open a new tab and the shelf should be there. The first time, Chrome asks if you meant to change your new tab page, just keep it.
 
-## Using it
+Edge, Brave and Arc load it the same way. The extension ID is fixed in the manifest, so if you load it on a second computer your book heights and colours carry over through Chrome sync.
 
-- Shelf keeps its own books in a **Shelf** folder under Other bookmarks, which Chrome doesn't show on the bookmarks bar. It's made the first time you open a new tab and starts empty. It syncs like any bookmark folder. You can still point the shelf at another folder under Settings (top right). Each subfolder gets its own labelled shelf, unless you turn that off.
-- The books are drawn as solid blocks, with page edges on top and the back going away to the right, standing on an oak plank. It's an oblique drawing made of flat shapes, not a CSS 3D turn, because the 3D turn made Chrome stretch the shelf and blurred the titles. Hover a book to lift it.
-- In 2D (Settings, "Draw the books in 3D / 2D") each book is one flat rounded block of its colour, lit a little from the top, with the site's icon at the foot, after Apple's newer app icons. The shelf is a plain rounded bar.
-- Press `1` to `9` to open a book. Hold Ctrl to open it in a background tab.
-- To add a book, drag a link, the site icon from the address bar, a bookmark from the bookmarks bar, or a `.url` shortcut onto the shelf. It lands where the pink bar shows. A small card opens under it: rename it, paste an image for its icon, or Undo.
-- The add card reads as a sentence ("Add ___ called ___ with the icon from ___") beside a small preview of the book, which fills in and changes colour as you type.
-- For an icon, right-click any image on the web, choose **Copy image address**, and paste it into the icon field. If the site allows it, Shelf copies the image ("Copied.") so it works offline and colours the cover. If not, it links the image instead ("Linked, not copied."). Click **Keep a copy** to give Shelf permission for that one site and copy it. You can also paste a copied image, drop an image anywhere on the card, or pick a file.
-- Click **Add a book** to add one by typing or pasting its address instead.
-- Click **Edit** to edit. Drag a book to move it (this moves the real bookmark). Click a book to rename it, change its height, colour or icon, or remove it. The first colour swatch (with the dot) means "match the icon".
-- Settings also sets the colours: pick a paper (Chalk, White, Putty, Linen, Stone, Sage, Blush, Sky or Night) or any colour from the + picker, and an accent for the ribbon and highlights. Text, panels and grey labels are worked out from the paper and always stay readable (5:1); a very loud paper gets nudged just enough to pass. You can also turn off the grain. Colours sync with your other settings.
-- The pink ribbon marks the site you opened most in the last seven days (at least three visits). You can turn it off in Settings.
-- Each cover is dyed from its site's icon: the icon's main colour, darker and duller like book cloth, always at least 5:1 against its title. Mostly-white icons get cream boards, white marks with no background get black cloth.
-- Sites Chrome has never loaded show their first letter and a stand-in colour until it has their icon.
+## How to use it
 
-## Files
+1. To add a book, drag the little icon at the left of the address bar straight onto the shelf, or a link from any page, or something off the bookmarks bar. The pink line is where it goes, and when you let go a card opens under it where you can rename the book or paste in a different icon. If you have the address but nothing to drag, **Add a book** in the top right lets you paste it in.
 
-- `theme.css`: colours and fonts. Swap it to reskin.
-- `newtab.css`: layout and components.
-- `js/main.js` starts everything. `store.js` owns the state, `bookmarks.js` reads the tree, `shelf.js` draws it, `drop.js` works out where a drop lands, `reorder.js` and `add.js` handle dragging and adding, `iconfield.js` is the icon square and image address field, `preview.js` is the little book in the add card, `bookpanel.js` and `settings.js` are the two panels, `icons.js` and `ribbon.js` do favicons and the ribbon, `cloth.js` reads a cover colour off each icon, `palette.js` works out every colour from the paper and accent, `boot.js` puts them and the 3D/2D look back before the page paints.
-- `docs/`: the screenshots in this readme.
-- `fonts/`: Fraunces (upright and italic), Archivo (variable, covers narrow widths too) and JetBrains Mono, latin subsets.
-- Until its icon colour is known, a book's stand-in ink comes from its address, so it keeps the same colour wherever it sits. Two stand-in neighbours that would match get nudged apart. Thickness varies a little per address too, like real books.
+   ![Adding a book](docs/add.png)
 
-## Tests
+2. Clicking a book opens it, and so does pressing its number from `1` to `9`, with Ctrl if you want it in a background tab.
 
-Headless, in Playwright's Chromium with a seeded profile. Branded Chrome no longer loads unpacked extensions from the command line, so the tests don't use it.
+3. **Edit** lets you drag books around (which moves the real bookmarks too) and click any book to change its name, address, height, colour or icon. Press **Done** to go back.
 
-```
-py -m venv C:/dev/.venvs/shelf-newtab
-C:/dev/.venvs/shelf-newtab/Scripts/python -m pip install playwright
-C:/dev/.venvs/shelf-newtab/Scripts/python tests/cdp_test.py
-```
+   ![Editing a book](docs/edit.png)
 
-The venv lives outside this folder because Chrome refuses to load an extension that contains files starting with `_`. Screenshots land in `tests/shots/`.
+4. **Settings** is where the 3D and 2D switch is, along with the paper and accent colours and the switches for the ribbon, the leaning last book and the grain.
 
-`tests/looks.py <out> [demo] [states] [fresh] [2d]` takes quick screenshots: `demo` fills the shelf with twelve visited sites so their icons and cloth colours show, `states` adds settings, edit panel and add card, `fresh` starts with no Shelf folder to check first run, `2d` draws it flat. The readme shots are `demo` and `demo 2d` at 1440, cropped to the shelf.
+   ![Settings](docs/settings.png)
+
+   ![Shelf in 2D](docs/shelf-2d.png)
+
+## All features
+
+- Its own **Shelf** folder under Other bookmarks, which syncs like any other bookmark folder. You can point it at a different folder in Settings.
+- One labelled shelf per subfolder, or all of them together on one shelf
+- 3D: hardcover books with page edges on an oak plank
+- 2D: flat rounded books on a plain bar, after Apple's newer app icons
+- Covers dyed from each site's icon, always dark or light enough for the title to read. Sites Chrome hasn't loaded yet show their first letter until the icon comes in.
+- Four heights per book, and your own cover colour if you don't want the icon's
+- Drag to add from a page, the address bar, the bookmarks bar or a `.url` shortcut
+- **Add a book** for typing or pasting an address
+- Icons from a pasted image, a pasted image address, an image dropped on the card or a file
+- **Undo** on the card, for a book you just added
+- `1` to `9` to open a book, Ctrl for a background tab, Esc to close panels and leave Edit
+- A ribbon on the site you opened most this week, once it has at least three visits
+- The last book leaning on the others
+- Chalk, White, Putty, Linen, Stone, Sage, Blush, Sky and Night papers, or any colour from the picker, with text and panels that adjust to stay readable
+- Five accents (Magenta, Vermilion, Cobalt, Green and Ochre) for the ribbon and highlights
+- Fine grain on the paper, which you can turn off
+- Settings, heights and colours that follow you to other computers through your Chrome account
+- No sign-up and no server of its own
