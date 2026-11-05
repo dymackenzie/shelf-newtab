@@ -1,6 +1,8 @@
 // the page's colours all come from two picks: the paper and the accent. everything else (text, panels,
 // grey text, the darker accent used for words) is worked out here so it always clears 5:1, even for a custom paper
 export const PAPERS = [
+  ['chalk', 'Chalk', '#FAF9F5'],
+  ['white', 'White', '#FFFFFF'],
   ['putty', 'Putty', '#DDDDD1'],
   ['linen', 'Linen', '#EDE8DD'],
   ['stone', 'Stone', '#D2CABD'],
@@ -48,7 +50,10 @@ export function derive({ paper, accent, grain = true }) {
   const text = dark ? '#EDE8DC' : '#141210';
   ground = clear(ground, [text], dark ? '#000000' : '#FFFFFF', 5.4);
   const card = mix(ground, '#FFFFFF', dark ? 0.06 : 0.35);
-  const field = ground;
+  // on near-white paper the panels can't get any lighter, so the fields go a shade darker to still show,
+  // and the grain is halved (at full strength it turns white paper grey)
+  const pale = !dark && lum(ground) > 0.88;
+  const field = pale ? mix(ground, text, 0.05) : ground;
   // grey text: as far toward the paper as it can go while staying readable on paper, panels and fields
   let dim = text;
   for (let t = 0.7; t >= 0; t -= 0.02) { const c = mix(text, ground, t); if ([ground, card, field].every(b => ratio(c, b) >= 5.15)) { dim = c; break; } }
@@ -58,7 +63,7 @@ export function derive({ paper, accent, grain = true }) {
     '--track-on': text, '--knob-on': ground, '--track-off': mix(ground, text, dark ? 0.22 : 0.16), '--knob-off': card,
     '--shadow': dark ? '0, 0, 0' : '32, 30, 22',
     '--rule': dark ? 'rgba(237, 232, 220, .28)' : 'rgba(32, 30, 22, .45)',
-    '--grain': grain ? (dark ? '.22' : '.1') : '0',
+    '--grain': grain ? (dark ? '.22' : pale ? '.05' : '.1') : '0',
     'color-scheme': dark ? 'dark' : 'light',
   };
 }
