@@ -6,7 +6,8 @@ import { learnCloth } from './cloth.js';
 import { introVars } from './intro.js';
 
 export const SIZES = { 1: { w: 3.3, h: 15 }, 2: { w: 3.6, h: 17.5 }, 3: { w: 4, h: 20 }, 4: { w: 4.5, h: 23 } };
-const GAP = 0.16, LEAN_ROOM = 2.7;
+// the 2d shelf leaves a little air between books, since there's no back cover filling it
+const GAPS = { '3d': 0.16, '2d': 0.4 }, LEAN_ROOM = 2.7;
 
 const NUMERALS = ['M', 1000, 'CM', 900, 'D', 500, 'CD', 400, 'C', 100, 'XC', 90, 'L', 50, 'XL', 40, 'X', 10, 'IX', 9, 'V', 5, 'IV', 4, 'I', 1];
 export function roman(n) {
@@ -39,6 +40,7 @@ export function render(s) {
   $('#where').textContent = (s.folder.title === 'Shelf' ? '' : `${s.folder.title}, `) + `${n0} book${n0 === 1 ? '' : 's'}`;
 
   const avail = main.clientWidth / rem();
+  const GAP = GAPS[s.settings.look] ?? GAPS['3d'];
   const groups = s.groups.length ? s.groups : [{ label: null, parentId: s.folder.id, items: [] }];
   const emptyAll = !s.books.length && !s.ghost;
   let n = 0, last = null, lastRow = null, lastRowW = 0;

@@ -1,4 +1,4 @@
-import { $, h } from './dom.js';
+import { $ } from './dom.js';
 import * as store from './store.js';
 import { render } from './shelf.js';
 import { initReorder } from './reorder.js';
@@ -7,22 +7,20 @@ import { openBookPanel } from './bookpanel.js';
 import { openSettings } from './settings.js';
 import { panelKind, closePanel } from './panel.js';
 import { watchRibbon } from './ribbon.js';
-import { renderIndex } from './index.js';
 import { applyTheme } from './palette.js';
 import { reveal, decoded } from './intro.js';
 import { iconsSettled } from './shelf.js';
 import { ribbonPlaced } from './ribbon.js';
 
-// switched-off parts hide by a class on <html>. boot.js puts them back before paint so new tabs don't flash them
+// 2d is a class on <html>. boot.js puts it back before paint so a new tab doesn't flash the 3d shelf
 store.subscribe(s => {
-  const hide = [['no-index', !s.settings.contents], ['no-date', !s.settings.date]];
-  for (const [c, on] of hide) document.documentElement.classList.toggle(c, on);
-  localStorage.setItem('shelf:hide', hide.filter(x => x[1]).map(x => x[0]).join(' '));
+  const flat = s.settings.look === '2d';
+  document.documentElement.classList.toggle('flat', flat);
+  localStorage.setItem('shelf:look', flat ? '2d' : '3d');
 });
 // render goes first so the card and ribbon see the fresh shelf
 store.subscribe(s => applyTheme(s.settings));
 store.subscribe(render);
-store.subscribe(renderIndex);
 initAdd();
 initReorder();
 watchRibbon();
@@ -74,14 +72,6 @@ $('#gear').addEventListener('click', () => {
 
 let resizeT;
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(store.touch, 80); });
-
-const setDate = () => {
-  const d = new Date();
-  $('#date').replaceChildren(h('em', {}, d.toLocaleDateString(undefined, { weekday: 'long' })), ' ',
-    d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }));
-};
-setDate();
-setInterval(setDate, 60e3);
 
 await store.load();
 // wait for the render store.load queued (and the one the ribbon queues), then open the page in one go

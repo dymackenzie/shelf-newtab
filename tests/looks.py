@@ -1,6 +1,6 @@
 """Quick screenshots of the shelf at 1440 and 900, plus settings, edit panel and add card with `states`.
 Same profile setup as cdp_test.py.
-    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [states] [nocontents] [nodate] [flat]
+    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [demo] [states] [hover] [fresh] [flat] [2d] [nograin] [paper=..] [accent=..]
 """
 import os, subprocess, sys, time, urllib.request
 from playwright.sync_api import sync_playwright
@@ -54,7 +54,8 @@ def main():
             page.evaluate("""chrome.storage.sync.set({'b:https://calendar.google.com/calendar/u/0/r': {s: 4},
               'b:https://www.notion.so/': {s: 3}, 'b:https://canvas.ubc.ca/': {s: 4}, 'b:https://claude.ai/new': {s: 3},
               'b:https://www.wikipedia.org/': {s: 4}, 'b:https://open.spotify.com/': {s: 3}, 'b:https://recent.design/': {s: 3}}).then(() => 1)""")
-            off = {k: False for k, flag in (('contents', 'nocontents'), ('date', 'nodate'), ('subShelves', 'flat'), ('grain', 'nograin')) if flag in sys.argv}
+            off = {k: False for k, flag in (('subShelves', 'flat'), ('grain', 'nograin')) if flag in sys.argv}
+            if '2d' in sys.argv: off['look'] = '2d'
             off.update({a.split('=')[0]: a.split('=', 1)[1] for a in sys.argv if a.startswith(('paper=', 'accent='))})  # e.g. paper=white
             if off:  # parts switched off in settings
                 page.evaluate("off => chrome.storage.sync.get('settings').then(r => chrome.storage.sync.set({ settings: { ...r.settings, ...off } })).then(() => 1)", off)
@@ -74,7 +75,7 @@ def main():
                       const pl = [...document.querySelectorAll('.plank')].pop().getBoundingClientRect().bottom;
                       return { above: Math.round(t), below: Math.round(innerHeight - pl), scrolls: document.documentElement.scrollHeight > innerHeight } })()"""))
                 if 'hover' in sys.argv:
-                    # hover a book with the real mouse, then once more from the index, and shoot both
+                    # hover two books with the real mouse and shoot both
                     page.set_viewport_size({'width': 1440, 'height': 900}); page.wait_for_timeout(300)
                     for k, name in ((2, 'hover'), (7, 'hover-2')):
                         r = page.evaluate(f"(() => {{ const r = T.books()[{k}].getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2] }})()")
@@ -87,10 +88,6 @@ def main():
                               '| probe:', page.evaluate(f"""(() => {{ const b = T.books()[{k}].getBoundingClientRect(); const out = [];
                                 for (let y = b.top + 5; y < b.bottom; y += 25) {{ const e = document.elementFromPoint({r[0] + 6}, y); out.push(Math.round(y - b.top) + ':' + (e ? e.className || e.tagName : 'null')); }} return out.join(' ') }})()"""),
                               '| hovered book:', page.evaluate(f"T.books()[{k}].querySelector('.nm').textContent"))
-                    page.mouse.move(5, 890); page.wait_for_timeout(500)
-                    li = page.evaluate("(() => { const r = document.querySelectorAll('#index li a')[4].getBoundingClientRect(); return [r.x + 20, r.y + r.height / 2] })()")
-                    page.mouse.move(*li); page.wait_for_timeout(700)
-                    page.screenshot(path=os.path.join(OUT, 'hover-from-index.png'))
                     page.mouse.move(5, 890); page.wait_for_timeout(400)
                 if 'states' in sys.argv:
                     page.set_viewport_size({'width': 1440, 'height': 900}); page.wait_for_timeout(400)

@@ -31,12 +31,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .dock .pill { padding: .5rem 1.05rem; border-radius: 99px; background: var(--text); color: var(--ground); }
 .dock .pill:hover { text-decoration: none; opacity: .86; }
 
-.page { width: min(66rem, 100% - 8rem); margin: 0 auto; }
-h1 { margin: 6vh 0 0; font: 640 3.6rem/1 var(--sans); font-stretch: 88%; letter-spacing: -.04em; }
-h1 em { font: italic 380 1.1em/1 var(--serif); letter-spacing: -.02em; margin-right: .16em; }
+/* just the shelf, in the middle of the window. the bottom padding makes up for the header and the empty room
+   above each row, plus a little lift so it doesn't read low */
+.page {
+  display: flex; flex-direction: column; justify-content: center;
+  width: min(66rem, 100% - 6rem); min-height: calc(100vh - 5rem); margin: 0 auto;
+}
 #hint { margin: .8rem 0 0; font-size: .85rem; color: var(--dim); }
 
-main { margin-top: 1.2rem; padding-bottom: 8rem; }
+main { padding-bottom: 9rem; }
 .group + .group { margin-top: 3.2rem; }
 .group h2 { display: flex; gap: .6rem; align-items: baseline; margin: 0 0 -1.2rem; font: 640 1.05rem var(--sans); letter-spacing: -.01em; }
 .group h2::after { content: attr(data-n); font: 400 .85rem var(--serif); color: var(--dim); }
@@ -236,7 +239,14 @@ input[role=switch]:checked { background: var(--track-on); }
 input[role=switch]:checked::before { transform: translateX(.95rem); background: var(--knob-on); }
 input[role=switch]:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--accent); }
 /* colour dots in settings */
-.sentence.colours { cursor: default; }
+.sentence.colours, .sentence.look { cursor: default; }
+/* the 3D / 2D switch: two words in a pill, the picked one filled like an on switch */
+.seg { display: inline-flex; margin-left: .15rem; padding: .15rem; border-radius: 99px; background: var(--field); }
+.seg label { position: relative; display: block; cursor: pointer; }
+.seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.seg span { display: block; padding: 0 .7rem; border-radius: 99px; font-size: 1rem; line-height: 1.7; color: var(--dim); }
+.seg input:checked + span { background: var(--track-on); color: var(--knob-on); }
+.seg input:focus-visible + span { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--accent); }
 .dots { display: inline-flex; align-items: center; gap: .4rem; margin-left: .15rem; }
 .dot {
   position: relative; flex: none; width: 1.45rem; height: 1.45rem; border-radius: 50%; cursor: pointer;
@@ -286,49 +296,35 @@ input[role=switch]:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px 
 .panel .status { display: block; margin-top: .35rem; font-size: .85rem; }
 .panel.over { box-shadow: 0 0 0 2px var(--accent), 0 1.2rem 2.6rem -.8rem rgba(var(--shadow), .35); }
 
-/* the contents box, after shopify editions' numbered index. narrow windows drop it and get the big date back */
-.page { display: grid; grid-template-columns: 15rem 1fr; gap: 3.5rem; width: min(84rem, 100% - 6rem); }
-.index {
-  display: block; align-self: start; position: sticky; top: 1.5rem; margin-top: 7vh;
-  padding: 1.1rem 1.2rem 1.3rem; box-shadow: inset 0 0 0 1px var(--rule);
+
+/* 2D: the same shelf drawn flat, after apple's newer app icons. each book is one rounded block of its colour,
+   lit a little from the top with a thin bright rim, and the site's icon sits straight on it at the foot */
+.flat .row { gap: .4rem; }
+.flat .bk, .flat .tp, .flat .band, .flat .au, .flat .box::after, .flat .mini::after { display: none; }
+.flat .box, .flat .mini {
+  border-radius: .8rem;
+  background: linear-gradient(color-mix(in oklab, var(--bg) 92%, white), var(--bg) 45%, color-mix(in oklab, var(--bg) 92%, black));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 1px 0 rgba(255, 255, 255, .3),
+    0 .1rem .15rem rgba(var(--shadow), .14), 0 .6rem 1.2rem -.5rem rgba(var(--shadow), .4);
 }
-h1 { display: none; }
-main { margin-top: 5vh; }
-/* the day's painting, like the plate facing a book's title page */
-.plate { margin: 0 0 1.2rem; }
-.plate img { display: block; width: 100%; height: 9.5rem; object-fit: cover; box-shadow: 0 .3rem .8rem rgba(var(--shadow), .25); }
-.plate figcaption { margin-top: .5rem; font: 400 .8rem/1.3 var(--serif); color: var(--dim); }
-.index .ttl { margin: 0 0 1.6rem; font: 640 2.2rem/.95 var(--sans); font-stretch: 88%; letter-spacing: -.045em; }
-.index .ttl em { display: block; font: italic 380 1.1em/1 var(--serif); letter-spacing: -.02em; }
-.index .sub { margin: 0 0 .9rem; font: 400 1.05rem/1.2 var(--serif); }
-.index ol { margin: 0; padding: 0; list-style: none; }
-.index li + li.gh { margin-top: .9rem; }
-.index li.gh { font-size: .82rem; font-weight: 600; color: var(--dim); }
-.index a { display: flex; justify-content: space-between; align-items: baseline; color: var(--text); text-decoration: none;
-  font: 660 1.22rem/1.04 var(--sans); letter-spacing: -.03em; }
-.index a i { font: 400 .78rem var(--serif); font-style: normal; color: var(--dim); letter-spacing: 0; }
-.index a:hover { color: var(--accent-text); }
-@media (max-width: 1000px) {
-  .page { display: block; width: min(66rem, 100% - 6rem); }
-  .index { display: none; }
-  h1 { display: block; }
-  main { margin-top: 1.2rem; }
+.flat :is(.book, .mini) .nm { margin-top: 1.15rem; max-height: calc(100% - 4.6rem); font: 600 1.12rem/1 var(--sans); letter-spacing: -.01em; }
+.flat :is(.book, .mini) .chip { width: 1.7rem; height: 1.7rem; margin: auto 0 .75rem; }
+.flat :is(.book, .mini) .chip img { width: 1.7rem; height: 1.7rem; border-radius: .3rem; }
+.flat .letter { font: 680 1.2rem/1 var(--sans); }
+.flat .book.fresh, .flat .book.ghost { border-radius: .8rem; }
+/* the shelf is a plain rounded bar, a shade darker than the paper */
+.flat .plank { height: .75rem; margin: 0 -1rem; }
+.flat .plank::before { display: none; }
+.flat .plank::after {
+  border-radius: 99px; background: color-mix(in oklab, var(--ground) 84%, var(--text));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 .6rem 1.1rem -.5rem rgba(var(--shadow), .35);
 }
-/* contents switched off in settings: same as the narrow layout */
-.no-index .page { display: block; width: min(66rem, 100% - 6rem); }
-.no-index .index { display: none; }
-.no-index h1 { display: block; }
-.no-index main { margin-top: 1.2rem; }
-/* no date: the shelf moves up into its place */
-.no-date #date { display: none; }
-.no-date main { margin-top: 5vh; }
-/* and with no contents either, the shelves sit in the middle of the window. the bottom padding
-   makes up for the header and the empty room above each row, plus a little lift so it doesn't read low */
-.no-date.no-index .col { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 5rem); }
-.no-date.no-index main { margin-top: 0; padding-bottom: 9rem; }
-@media (max-width: 1000px) {
-  .no-date .col { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 5rem); }
-  .no-date main { margin-top: 0; padding-bottom: 9rem; }
+/* the ribbon is a flat tab of the accent poking out of the top, kept clear of the rounded corner */
+.flat .ribbon { left: auto; right: .85rem; top: -1.45rem; bottom: auto; width: .72rem; height: 1.5rem; transform: none; filter: none; }
+.flat .ribbon::after { content: none; }
+.flat .ribbon::before {
+  content: ""; inset: 0; width: auto; height: auto; transform: none; filter: none;
+  background: var(--accent); clip-path: polygon(0 0, 50% 26%, 100% 0, 100% 100%, 0 100%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -341,8 +337,7 @@ main { margin-top: 5vh; }
    books go on left to right. --late is how far into the opening a re-render lands, so rebuilt books don't restart */
 .wait .top, .wait .page { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .intro .top, .intro .index, .intro #date { animation: rise .6s cubic-bezier(.2, .6, .2, 1) backwards; }
-  .intro .index { animation-delay: 80ms; }
+  .intro .top { animation: rise .6s cubic-bezier(.2, .6, .2, 1) backwards; }
   .intro .plank, .intro .group h2, .intro .empty { animation: fade .6s ease-out backwards; animation-delay: calc(var(--late, 0ms) + 150ms); }
   .intro .book .box { animation: shelve .5s cubic-bezier(.2, .6, .2, 1) backwards; animation-delay: calc(var(--late, 0ms) + 320ms + var(--i, 0) * var(--step, 45ms)); }
 }

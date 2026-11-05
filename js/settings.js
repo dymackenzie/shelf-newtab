@@ -7,9 +7,6 @@ const SWITCHES = [
   ['subShelves', 'Give each subfolder its own shelf'],
   ['ribbon', 'Put a ribbon on the book I open most'],
   ['lean', 'Let the last book lean'],
-  ['date', 'Show the date'],
-  ['contents', 'Show the contents beside the shelf'],
-  ['painting', 'Show a painting in the contents'],
   ['grain', 'Give the paper a fine grain'],
 ];
 
@@ -37,6 +34,14 @@ function swatches(key, list, current, custom) {
   return h('span', { class: 'dots', role: 'group' }, dots);
 }
 
+// 3D or 2D, as a two-way switch. radios underneath, so arrow keys flip it like any radio group
+function lookSwitch(current) {
+  const opt = (v, text) => h('label', {},
+    h('input', { type: 'radio', name: 'look', value: v, checked: current === v, onchange: () => store.saveSettings({ look: v }) }),
+    h('span', {}, text));
+  return h('span', { class: 'seg', role: 'radiogroup', 'aria-label': 'Draw the books in' }, opt('3d', '3D'), opt('2d', '2D'));
+}
+
 export function openSettings() {
   const s = store.get();
   const select = h('select', { id: 's-folder', onchange: e => store.saveSettings({ folder: e.target.value }) },
@@ -53,6 +58,7 @@ export function openSettings() {
   openPanel('settings', [
     h('h3', {}, 'Shelf'),
     h('label', { class: 'sentence' }, 'Show', h('span', { class: 'pick' }, select), 'on the shelf.'),
+    h('div', { class: 'sentence look' }, h('span', {}, 'Draw the books in'), lookSwitch(s.settings.look)),
     h('div', { class: 'sentence colours' }, h('span', {}, 'The paper is'), swatches('paper', PAPERS, s.settings.paper, true)),
     h('div', { class: 'sentence colours' }, h('span', {}, 'The accent is'), swatches('accent', ACCENTS, s.settings.accent, false)),
     ...sentences,

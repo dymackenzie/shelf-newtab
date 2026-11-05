@@ -1,4 +1,4 @@
-"""Shelf v0.5 tests. Playwright's Chromium, headless, with the unpacked extension and a seeded Bookmarks file.
+"""Shelf tests. Playwright's Chromium, headless, with the unpacked extension and a seeded Bookmarks file.
 
 Chromium instead of Chrome because branded Chrome stopped honouring --load-extension in 137, and a
 throwaway Chromium profile never signs into an account, so nothing here can sync anywhere.
@@ -177,23 +177,15 @@ def run(page, cdp, errors):
       for (let y = r.top + 8; y < r.bottom - 8; y += 12) if (document.elementFromPoint(x, y)?.closest('.book') !== b) out.push(b.querySelector('.nm').textContent + '@' + Math.round(y - r.top));
       return out; })""")
     check('no dead spots on any spine', not holes, holes[:8])
-    ev("document.querySelectorAll('#index li a')[2].dispatchEvent(new MouseEvent('mouseenter'))"); sleep(400)
-    check('hovering a line in the contents lifts its book', lifted() == [ev("T.names()[2]")])
-    ev("document.querySelectorAll('#index li a')[2].dispatchEvent(new MouseEvent('mouseleave'))"); sleep(400)
     where = ev("chrome.storage.sync.get('settings').then(r => r.settings.folder)")
     check("shelf reads its own folder by default", where == 'Other bookmarks / Shelf', where)
-    shown = []
-    for i in range(24):
-        if i: page.reload(); sleep(700)
-        p = ev("""(() => { const i = document.querySelector('#index .plate img'), c = document.querySelector('#index figcaption');
-          return { ok: !!i && i.complete && i.naturalWidth > 0, key: document.querySelector('#index .plate').dataset.key, cap: c?.textContent } })()""")
-        if i == 0: check('the painting loads in the contents box with its caption', p['ok'] and p['cap'], p)
-        if not p['ok']: check(f"painting {p['key']} loads", False, p)
-        shown.append(p['key'])
-    n = ev("import('./js/paintings.js').then(m => m.PAINTINGS.length)")
-    check('a different painting on every new tab (never the same twice in a row)', all(x != y for x, y in zip(shown, shown[1:])), shown[:6])
-    check(f'every one of the {n} paintings shows before any repeats', len(set(shown[:n])) == n, f'{len(set(shown[:n]))} distinct in first {n}')
-    sleep(500); ev(HELPERS)  # reloading wiped the test helpers
+    page_bits = ev("['#index', '#date', '.plate', 'h1'].filter(q => document.querySelector(q))")
+    check('just the shelf: no date, contents or painting on the page', page_bits == [], page_bits)
+    gap = ev("""(() => { const tops = [...document.querySelectorAll('.book')].map(b => b.getBoundingClientRect().top);
+      const planks = [...document.querySelectorAll('.plank')]; const end = planks[planks.length - 1].getBoundingClientRect().bottom;
+      return { above: Math.round(Math.min(...tops)), below: Math.round(innerHeight - end), scrolls: document.documentElement.scrollHeight > innerHeight } })()""")
+    check('the shelves sit in the middle of the window, no scrollbar', abs(gap['above'] - gap['below']) < 0.15 * ev('innerHeight') and not gap['scrolls'], gap)
+    check('3D is the default look', ev("chrome.storage.sync.get('settings').then(r => r.settings.look)") == '3d' and not ev("document.documentElement.classList.contains('flat')"))
 
     sleep(800)
     cloth = ev("""(async () => { const k = 'c:https://piazza.com/', c = (await chrome.storage.local.get(k))[k];
@@ -334,12 +326,12 @@ def run(page, cdp, errors):
     ev("document.querySelector('#gear').click()"); sleep(400)
     txt = ev("[...document.querySelectorAll('#panel h3, #panel .sentence')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
     check('panel reads as written', txt[0] == 'Shelf' and txt[1].startswith('Show') and txt[1].endswith('on the shelf.')
-          and txt[2] == 'The paper is' and txt[3] == 'The accent is'
-          and txt[4:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean', 'Show the date', 'Show the contents beside the shelf', 'Show a painting in the contents', 'Give the paper a fine grain'], txt)
+          and txt[2] == 'Draw the books in3D2D' and txt[3] == 'The paper is' and txt[4] == 'The accent is'
+          and txt[5:] == ['Give each subfolder its own shelf', 'Put a ribbon on the book I open most', 'Let the last book lean', 'Give the paper a fine grain'], txt)
     check('title is Archivo, like the top bar', 'Archivo' in ev("getComputedStyle(document.querySelector('#panel h3')).fontFamily"))
     check('each sentence sits on one line', ev("[...document.querySelectorAll('#panel .sentence')].every(l => l.getBoundingClientRect().height < 2.6 * parseFloat(getComputedStyle(l).fontSize))"))
     sw = ev("[...document.querySelectorAll('#panel input[role=switch]')].map(i => i.type + ':' + i.checked + ':' + (i.closest('label.sentence') ? 'label' : '-'))")
-    check('seven real switches inside their sentence labels, on by default', sw == ['checkbox:true:label'] * 7, sw)
+    check('four real switches inside their sentence labels, on by default', sw == ['checkbox:true:label'] * 4, sw)
     before = ev('T.names()')
     for k in ('subShelves', 'ribbon', 'lean'):
         x, y = ev(f"T.center(document.querySelector('#panel input[data-key={k}]').previousElementSibling)")
@@ -362,10 +354,10 @@ def run(page, cdp, errors):
     page.select_option('#s-folder', 'Other bookmarks / Shelf'); sleep(600)
     page.focus('#s-folder')
     order = []
-    for _ in range(22):  # 9 papers, the picker, 5 accents, 7 switches
+    for _ in range(20):  # the 3D/2D pair (one stop), 9 papers, the picker, 5 accents, 4 switches
         key('Tab')
-        order.append(ev("document.activeElement.dataset.key || document.activeElement.dataset.v || document.activeElement.type || document.activeElement.id"))
-    check('Tab walks the colours, then the switches', order[:9] == ['chalk', 'white', 'putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-7:] == ['subShelves', 'ribbon', 'lean', 'date', 'contents', 'painting', 'grain'], order)
+        order.append(ev("document.activeElement.dataset.key || document.activeElement.dataset.v || (document.activeElement.type === 'radio' ? document.activeElement.value : document.activeElement.type) || document.activeElement.id"))
+    check('Tab walks the look, the colours, then the switches', order[0] == '3d' and order[1:10] == ['chalk', 'white', 'putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-4:] == ['subShelves', 'ribbon', 'lean', 'grain'], order)
     key('Space')
     check('Space toggles the focused switch', ev("!document.activeElement.checked"))
     key('Space')
@@ -385,7 +377,7 @@ def run(page, cdp, errors):
     check('the page waits hidden until it can open in one go', 'wait' in held[0] or 'intro' in held[0], held)
     sleep(1900); ev(HELPERS)
     after = ev("""[document.documentElement.classList.contains('wait') || document.documentElement.classList.contains('intro'),
-      [...document.querySelectorAll('.box, .plank, .top, .index')].every(e => getComputedStyle(e).opacity === '1')]""")
+      [...document.querySelectorAll('.box, .plank, .top')].every(e => getComputedStyle(e).opacity === '1')]""")
     check('after the opening everything is shown and settled', after == [False, True], after)
     ev("dispatchEvent(new Event('resize'))"); sleep(200)
     check('a re-render later does not replay the opening', ev('document.getAnimations().length') == 0, ev('document.getAnimations().length'))
@@ -410,30 +402,9 @@ def run(page, cdp, errors):
       }
       return out; })""")
     check('every paper and accent keeps text at 5:1, custom papers too', not bad, bad[:6])
-    ev("document.querySelector('#panel input[data-key=painting]').click()"); sleep(400)
-    check('painting switch hides the plate', not ev("!!document.querySelector('#index .plate')") and 'null' not in ev("document.querySelector('#index').textContent"))
-    ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
-    off = ev("({ box: getComputedStyle(document.querySelector('#index')).display, date: getComputedStyle(document.querySelector('#date')).display, kids: document.querySelector('#index').children.length, cached: localStorage.getItem('shelf:hide') })")
-    check('contents switch hides the box and brings the big date back', off['box'] == 'none' and off['date'] == 'block' and off['kids'] == 0 and off['cached'] == 'no-index', off)
-    check('contents off persists to storage.sync', ev("chrome.storage.sync.get('settings').then(r => r.settings.contents)") is False)
-    check('nothing spills sideways without the contents', not ev('document.documentElement.scrollWidth > innerWidth'))
-    ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
-    check('contents back on', ev("getComputedStyle(document.querySelector('#index')).display") == 'block' and ev("document.querySelectorAll('#index li a').length") > 0 and ev("localStorage.getItem('shelf:hide')") == '')
-    ev("document.querySelector('#panel input[data-key=date]').click()"); sleep(400)
-    check('date switch takes the date out of the contents, the count stays', not ev("!!document.querySelector('#index .ttl')") and ev("!!document.querySelector('#index .sub')"))
-    check('date off persists and is cached for the next tab', ev("chrome.storage.sync.get('settings').then(r => r.settings.date)") is False and ev("localStorage.getItem('shelf:hide')") == 'no-date')
-    ev("document.querySelector('#panel input[data-key=contents]').click()"); sleep(400)
-    both = ev("({ h1: getComputedStyle(document.querySelector('#date')).display, box: getComputedStyle(document.querySelector('#index')).display, cached: localStorage.getItem('shelf:hide') })")
-    check('date and contents both off: no big date either, just the shelf', both['h1'] == 'none' and both['box'] == 'none' and both['cached'] == 'no-index no-date', both)
-    gap = ev("""(() => { const tops = [...document.querySelectorAll('.book')].map(b => b.getBoundingClientRect().top);
-      const planks = [...document.querySelectorAll('.plank')]; const end = planks[planks.length - 1].getBoundingClientRect().bottom;
-      return { above: Math.round(Math.min(...tops)), below: Math.round(innerHeight - end), scrolls: document.documentElement.scrollHeight > innerHeight } })()""")
-    check('with neither, the shelves sit in the middle of the window, no scrollbar', abs(gap['above'] - gap['below']) < 0.15 * ev('innerHeight') and not gap['scrolls'], gap)
-    ev("document.querySelector('#panel input[data-key=contents]').click(); document.querySelector('#panel input[data-key=date]').click()"); sleep(400)
-    check('date back in the contents', ev("!!document.querySelector('#index .ttl')") and ev("localStorage.getItem('shelf:hide')") == '')
     ev("document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
     check('grain switch turns the grain off', rgb('--grain') == '0')
-    ev("document.querySelector('#panel input[data-key=painting]').click(); document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
+    ev("document.querySelector('#panel input[data-key=grain]').click()"); sleep(300)
     ev("document.querySelector('#panel .dot[data-v=putty]').click()"); sleep(200)
     ev("document.querySelector('#panel .dot[data-v=magenta]').click()"); sleep(400)
     check('back to putty and magenta', rgb('--ground') == '#DDDDD1' and rgb('--accent') == '#E2187F')
@@ -441,6 +412,40 @@ def run(page, cdp, errors):
     key('Escape')
     esc = ev("({ open: !document.querySelector('#panel').hidden, focus: document.activeElement.id })")
     check('Esc closes settings and focus returns to the gear', not esc['open'] and esc['focus'] == 'gear', esc)
+
+    print('\n# 7c 2D')
+    ev("document.querySelector('#gear').click()"); sleep(400)
+    x, y = ev("T.center(document.querySelector('#panel .seg input[value=\"2d\"]').nextElementSibling)")
+    page.mouse.click(x, y); sleep(500)
+    flat = ev("""chrome.storage.sync.get('settings').then(r => ({ stored: r.settings.look, cls: document.documentElement.classList.contains('flat'),
+      cached: localStorage.getItem('shelf:look'), on: document.querySelector('#panel .seg input:checked').value }))""")
+    check('clicking 2D flattens the shelf and persists to storage.sync', flat == {'stored': '2d', 'cls': True, 'cached': '2d', 'on': '2d'}, flat)
+    drawn = ev("""(() => { const b = T.book('Docs'), box = b.querySelector('.box'), cs = getComputedStyle(box);
+      return { depth: T.vis(b.querySelector('.tp')) || T.vis(b.querySelector('.bk')), bands: T.vis(b.querySelector('.band')), site: T.vis(b.querySelector('.au')),
+        round: parseFloat(cs.borderTopLeftRadius) === parseFloat(cs.borderBottomLeftRadius) && parseFloat(cs.borderBottomLeftRadius) > 8,
+        tile: getComputedStyle(b.querySelector('.chip')).backgroundColor, title: getComputedStyle(b.querySelector('.nm')).fontFamily } })()""")
+    check('2D books are single rounded blocks: no page edges, back, bands or site line', not drawn['depth'] and not drawn['bands'] and not drawn['site'] and drawn['round'], drawn)
+    check('2D icons sit straight on the book (no tile), titles in the sans', drawn['tile'] == 'rgba(0, 0, 0, 0)' and drawn['title'].startswith('Archivo'), drawn)
+    check('still no 3D transforms in 2D', ev("[...document.querySelectorAll('#shelves, #shelves *')].filter(e => getComputedStyle(e).transform.startsWith('matrix3d')).length") == 0)
+    key('Escape')
+    x, y = ev("T.center(T.book('Calendar'))"); page.mouse.move(x, y); sleep(500)
+    check('hover still lifts a book in 2D', lifted() == ['Calendar'], lifted())
+    page.mouse.move(5, 5); sleep(400)
+    check('the ribbon stays on in 2D', ev("document.querySelectorAll('.ribbon').length") == 1)
+    for w, hgt in SIZES:
+        size(w, hgt)
+        check(f'{w}x{hgt} 2D no horizontal overflow', not ev('document.documentElement.scrollWidth > innerWidth'))
+        shot(f'{w}x{hgt}-8-2d.png')
+    size(1440, 900)
+    page.reload(); sleep(150)
+    check('a new tab opens straight into 2D (no flash of the 3D shelf)', ev("document.documentElement.classList.contains('flat')"))
+    sleep(1900); ev(HELPERS)
+    ev("document.querySelector('#gear').click()"); sleep(400)
+    ev("document.querySelector('#panel .seg input:checked').focus()")
+    key('ArrowLeft'); sleep(300)
+    back = ev("chrome.storage.sync.get('settings').then(r => ({ stored: r.settings.look, cls: document.documentElement.classList.contains('flat'), tp: T.vis(T.book('Docs').querySelector('.tp')) }))")
+    check('arrow keys flip it back to 3D', back == {'stored': '3d', 'cls': False, 'tp': True}, back)
+    key('Escape')
 
     print('\n# 8 edit mode')
     ev("document.querySelector('#edit').click()"); sleep(400)
