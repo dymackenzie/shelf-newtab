@@ -54,7 +54,8 @@ def main():
             page.evaluate("""chrome.storage.sync.set({'b:https://calendar.google.com/calendar/u/0/r': {s: 4},
               'b:https://www.notion.so/': {s: 3}, 'b:https://canvas.ubc.ca/': {s: 4}, 'b:https://claude.ai/new': {s: 3},
               'b:https://www.wikipedia.org/': {s: 4}, 'b:https://open.spotify.com/': {s: 3}, 'b:https://recent.design/': {s: 3}}).then(() => 1)""")
-            off = {k: False for k, flag in (('contents', 'nocontents'), ('date', 'nodate'), ('subShelves', 'flat')) if flag in sys.argv}
+            off = {k: False for k, flag in (('contents', 'nocontents'), ('date', 'nodate'), ('subShelves', 'flat'), ('grain', 'nograin')) if flag in sys.argv}
+            off.update({a.split('=')[0]: a.split('=', 1)[1] for a in sys.argv if a.startswith(('paper=', 'accent='))})  # e.g. paper=white
             if off:  # parts switched off in settings
                 page.evaluate("off => chrome.storage.sync.get('settings').then(r => chrome.storage.sync.set({ settings: { ...r.settings, ...off } })).then(() => 1)", off)
             page.reload(); page.wait_for_timeout(2500); page.evaluate(HELPERS)

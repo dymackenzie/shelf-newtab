@@ -362,10 +362,10 @@ def run(page, cdp, errors):
     page.select_option('#s-folder', 'Other bookmarks / Shelf'); sleep(600)
     page.focus('#s-folder')
     order = []
-    for _ in range(20):  # 7 papers, the picker, 5 accents, 7 switches
+    for _ in range(22):  # 9 papers, the picker, 5 accents, 7 switches
         key('Tab')
         order.append(ev("document.activeElement.dataset.key || document.activeElement.dataset.v || document.activeElement.type || document.activeElement.id"))
-    check('Tab walks the colours, then the switches', order[:7] == ['putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-7:] == ['subShelves', 'ribbon', 'lean', 'date', 'contents', 'painting', 'grain'], order)
+    check('Tab walks the colours, then the switches', order[:9] == ['chalk', 'white', 'putty', 'linen', 'stone', 'sage', 'blush', 'sky', 'night'] and order[-7:] == ['subShelves', 'ribbon', 'lean', 'date', 'contents', 'painting', 'grain'], order)
     key('Space')
     check('Space toggles the focused switch', ev("!document.activeElement.checked"))
     key('Space')
@@ -381,7 +381,14 @@ def run(page, cdp, errors):
     page.reload(); sleep(150)
     early = ev("document.documentElement.style.getPropertyValue('--ground')")
     check('a new tab opens straight in the saved paper (no flash of the default)', early == '#1B2027', early)
-    sleep(900); ev(HELPERS)
+    held = ev("[document.documentElement.className, getComputedStyle(document.querySelector('.top')).opacity]")
+    check('the page waits hidden until it can open in one go', 'wait' in held[0] or 'intro' in held[0], held)
+    sleep(1900); ev(HELPERS)
+    after = ev("""[document.documentElement.classList.contains('wait') || document.documentElement.classList.contains('intro'),
+      [...document.querySelectorAll('.box, .plank, .top, .index')].every(e => getComputedStyle(e).opacity === '1')]""")
+    check('after the opening everything is shown and settled', after == [False, True], after)
+    ev("dispatchEvent(new Event('resize'))"); sleep(200)
+    check('a re-render later does not replay the opening', ev('document.getAnimations().length') == 0, ev('document.getAnimations().length'))
     ev("document.querySelector('#gear').click()"); sleep(400)
     ev("""(() => { const i = document.querySelector('#panel .dot.own input'); i.value = '#a4c9e8'; i.dispatchEvent(new Event('input', { bubbles: true })); })()""")
     sleep(700)
@@ -389,7 +396,8 @@ def run(page, cdp, errors):
     check('any colour from the picker becomes the paper', st == '#a4c9e8' and rgb('--ground') == '#A4C9E8', (st, rgb('--ground')))
     check('the picker dot is the one marked', ev("document.querySelector('#panel .dot.own').classList.contains('on') && document.querySelectorAll('#panel .dots .dot.on').length === 2"))
     ev("document.querySelector('#panel .dot[data-v=cobalt]').click()"); sleep(400)
-    check('picking an accent repaints the ribbon', rgb('--accent') == '#2F4BE0' and ev("getComputedStyle(document.querySelector('.ribbon')).backgroundColor") == 'rgb(47, 75, 224)')
+    silk = ev("getComputedStyle(document.querySelector('.ribbon')).getPropertyValue('--silk')")
+    check('picking an accent re-dyes the ribbon', rgb('--accent') == '#2F4BE0' and '2F4BE0' in silk.upper(), silk)
     # every preset, and a spread of odd custom papers, must keep all text at 5:1
     bad = ev("""import('./js/palette.js').then(m => {
       const papers = [...m.PAPERS.map(p => p[0]), '#ffffff', '#000000', '#ff0000', '#ffff00', '#00ff88', '#7a7a7a', '#5b3c88', '#c08040', '#e0e0ff', '#202020'];
