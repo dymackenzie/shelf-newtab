@@ -10,7 +10,7 @@ const SWITCHES = [
   ['grain', 'Give the paper a fine grain'],
 ];
 
-// a row of colour dots. the paper row ends with a picker for any colour he likes
+// a row of colour dots. the paper row also gets a picker for any colour
 function swatches(key, list, current, custom) {
   const dots = [];
   const mark = v => dots.forEach(d => d.classList.toggle('on', d.dataset.v === v || (d.classList.contains('own') && isHex(v) && !list.some(p => p[0] === v))));
@@ -21,7 +21,7 @@ function swatches(key, list, current, custom) {
   if (custom) {
     let t;
     const input = h('input', { type: 'color', value: paperHex(current), 'aria-label': 'Any colour' });
-    // the picker fires input on every drag step, so only save once he pauses
+    // the picker fires input on every drag step, so only save on a pause
     input.addEventListener('input', () => {
       own.style.setProperty('--c', input.value);
       own.dataset.v = input.value;

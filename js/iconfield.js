@@ -63,7 +63,7 @@ export function createIconField({ src, onImage }) {
     const keep = h('button', { type: 'button', class: 'link keep' }, 'Keep a copy');
     keep.addEventListener('click', async () => {
       const origin = `${new URL(url).origin}/*`;
-      // only this one site, and only because he clicked
+      // just this one site, and only after a click
       if (!(await chrome.permissions.request({ origins: [origin] }))) return say('Still linked. Copy the image itself and paste it to keep a copy.');
       try { await copy(url); } catch { say("Couldn't copy it. Copy the image itself and paste it instead."); }
     });

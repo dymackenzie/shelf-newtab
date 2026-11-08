@@ -47,7 +47,7 @@ def main():
                 except Exception: pass
                 hp.wait_for_timeout(1200)
             hp.close()
-            # first open learns every cloth and the ribbon, like his real browser after a day
+            # first open learns every cloth and the ribbon, like a real browser after a day
             warm = ctx.new_page(); warm.set_viewport_size({'width': 1440, 'height': 900})
             warm.goto(f'chrome-extension://{EXT_ID}/newtab.html'); warm.wait_for_timeout(4000); warm.close()
 

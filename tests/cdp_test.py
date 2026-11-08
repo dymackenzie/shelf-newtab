@@ -193,7 +193,7 @@ def run(page, cdp, errors):
     check('a visited site dyes its cover from its icon', cloth['c'] and cloth['bg'] == cloth['c']['bg'], cloth)
     if cloth['c']: check('icon-dyed cover still clears 5:1', ratio(cloth['c']['fg'], cloth['c']['bg']) >= 5, f"{ratio(cloth['c']['fg'], cloth['c']['bg']):.2f}")
 
-    # his sizes, so the shots look like his shelf
+    # mixed sizes so the shots look like a used shelf
     ev("""chrome.storage.sync.set({'b:https://calendar.google.com/calendar/u/0/r': {s: 4, ink: 0},
       'b:https://www.notion.so/': {s: 3, ink: 2}, 'b:https://canvas.ubc.ca/': {s: 4, ink: 1}}).then(() => 1)""")
     sleep(1000)

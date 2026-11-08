@@ -4,8 +4,7 @@ import { favicon } from './icons.js';
 import { coverFrom } from './cloth.js';
 import { host } from './urls.js';
 
-// the small book in the add card. same face as a spine on the shelf, filled in as he types.
-// height comes from the size, so a size setting can just call set({ size })
+// the small book in the add card, same face as a spine on the shelf
 const TALL = { 1: 10.5, 2: 12, 3: 13.5, 4: 15 };
 
 export function createPreview() {

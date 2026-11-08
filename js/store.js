@@ -48,7 +48,7 @@ export const INKS = 8;
 // stable number per address. picks the fallback ink until the icon colour is known, and the book's thickness
 export const hashOf = url => [...(url || '')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 export const inkOf = url => hashOf(url) % INKS;
-// ink is only there when he picked one, otherwise the cover follows the icon
+// ink is only set if one was picked, otherwise the cover follows the icon
 export const metaFor = url => ({ s: 2, ...(state.meta[url] || {}) });
 export const iconFor = url => state.icons[url] || favicon(url);
 
@@ -79,7 +79,7 @@ export async function reloadTree() {
 export async function load() {
   await loadStorage();
   if (!state.settings.folder) {
-    // first run (or coming from v0.2, which showed the bookmarks bar): start on shelf's own empty folder
+    // first run: start on shelf's own empty folder
     state.settings.folder = await ownFolderPath();
     await chrome.storage.sync.set({ settings: state.settings });
   }

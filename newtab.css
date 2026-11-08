@@ -254,7 +254,7 @@ input[role=switch]:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px 
 }
 .dot.on { box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--text); }
 .dot:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--accent); }
-/* the any-colour dot: a dashed ring with a plus until he picks one */
+/* the any-colour dot: a dashed ring with a plus until a colour is picked */
 .dot.own:not([style*="--c"]) { background: none; box-shadow: inset 0 0 0 1.5px var(--dim); }
 .dot.own:not([style*="--c"])::after { content: "+"; position: absolute; inset: 0; display: grid; place-items: center; font: 500 1rem/1 var(--sans); color: var(--dim); }
 .dot.own input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }

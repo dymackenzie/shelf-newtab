@@ -21,7 +21,7 @@ export const bookEl = id => $(`#shelves .book[data-id="${CSS.escape(id)}"]`);
 // real books are never exactly the same thickness, so each one gets a little more or less paper
 const widthOf = (url, s) => SIZES[s].w + ((hashOf(url) >> 3) % 5 - 2) * 0.12;
 
-// he picked an ink > the icon's colour > a fallback ink
+// picked ink > icon colour > fallback ink
 export function coverOf(b, m, s) {
   if (m.ink != null) return { bg: `var(--ink${m.ink}-bg)`, fg: `var(--ink${m.ink}-fg)`, ink: m.ink };
   if (s.cloth[b.url]) return { ...s.cloth[b.url], ink: null };

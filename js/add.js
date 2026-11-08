@@ -51,7 +51,7 @@ async function dropped(t, raw) {
   openDropCard(node);
 }
 
-// the card reads as a sentence, one line per thing to set. a later setting (book size, say) is one more line
+// the card reads as a sentence, one line per thing to set
 const line = (...kids) => h('p', { class: 'line' }, ...kids);
 
 function openDropCard(node) {
