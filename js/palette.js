@@ -56,7 +56,10 @@ export function derive({ paper, accent, grain = true }) {
   const field = pale ? mix(ground, text, 0.05) : ground;
   // grey text: as far toward the paper as it can go while staying readable on paper, panels and fields
   let dim = text;
-  for (let t = 0.7; t >= 0; t -= 0.02) { const c = mix(text, ground, t); if ([ground, card, field].every(b => ratio(c, b) >= 5.15)) { dim = c; break; } }
+  for (let t = 0.7; t >= 0; t -= 0.02) {
+    const c = mix(text, ground, t);
+    if ([ground, card, field].every(b => ratio(c, b) >= 5.15)) { dim = c; break; }
+  }
   return {
     '--ground': ground, '--card': card, '--field': field, '--text': text, '--dim': dim,
     '--accent': hot, '--accent-text': clear(hot, [ground, card], dark ? '#FFFFFF' : '#000000'),

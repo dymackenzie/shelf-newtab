@@ -13,10 +13,13 @@ const SWITCHES = [
 // a row of colour dots. the paper row also gets a picker for any colour
 function swatches(key, list, current, custom) {
   const dots = [];
-  const mark = v => dots.forEach(d => d.classList.toggle('on', d.dataset.v === v || (d.classList.contains('own') && isHex(v) && !list.some(p => p[0] === v))));
+  const mark = v => dots.forEach(d => d.classList.toggle('on',
+    d.dataset.v === v || (d.classList.contains('own') && isHex(v) && !list.some(p => p[0] === v))));
   const choose = v => { mark(v); store.saveSettings({ [key]: v }); };
   for (const [v, name, hex] of list) {
-    dots.push(h('button', { type: 'button', class: 'dot', title: name, 'aria-label': name, dataset: { v }, style: `--c:${hex}`, onclick: () => choose(v) }));
+    dots.push(h('button', {
+      type: 'button', class: 'dot', title: name, 'aria-label': name, dataset: { v }, style: `--c:${hex}`, onclick: () => choose(v),
+    }));
   }
   if (custom) {
     let t;
@@ -27,7 +30,9 @@ function swatches(key, list, current, custom) {
       own.dataset.v = input.value;
       clearTimeout(t); t = setTimeout(() => choose(input.value), 120);
     });
-    const own = h('label', { class: 'dot own', title: 'Any colour', dataset: { v: isHex(current) ? current : '' }, style: isHex(current) ? `--c:${current}` : '' }, input);
+    const own = h('label', {
+      class: 'dot own', title: 'Any colour', dataset: { v: isHex(current) ? current : '' }, style: isHex(current) ? `--c:${current}` : '',
+    }, input);
     dots.push(own);
   }
   mark(current);

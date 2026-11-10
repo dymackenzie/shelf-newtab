@@ -296,7 +296,6 @@ input[role=switch]:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px 
 .panel .status { display: block; margin-top: .35rem; font-size: .85rem; }
 .panel.over { box-shadow: 0 0 0 2px var(--accent), 0 1.2rem 2.6rem -.8rem rgba(var(--shadow), .35); }
 
-
 /* 2D: the same shelf drawn flat, after apple's newer app icons. each book is one rounded block of its colour,
    lit a little from the top with a thin bright rim, and the site's icon sits straight on it at the foot */
 .flat .row { gap: .4rem; }
