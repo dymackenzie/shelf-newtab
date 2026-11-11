@@ -1,13 +1,17 @@
 # Shelf, what's next
 
-v0.2 is built and the headless suite passes (84 checks). Not committed. Mackenzie names the commit.
+Getting it on the Chrome Web Store. Comment cleanup, ribbon A only, 2D as the default and new README shots are done (uncommitted). Full suite passes on Mac with the folder-name patch.
 
-## Before it goes to Mackenzie
-- Matisse checks the build against the sketches (newtab-sketches.html option C, shelf-add-settings.html A + A).
-- Try the real drags by hand in Chrome: a link from another page, the address bar site icon, a bookmarks bar item, a `.url` file from Explorer. The tests only fire synthetic drag events.
-- Try "Allow images from websites" for real. Headless can't show the permission prompt, so neither the yes nor the no path has been clicked.
+## Before uploading
+- The store rejects a manifest with `key`. Zip a copy without it, and only the extension files: `manifest.json`, `newtab.html`, `newtab.css`, `theme.css`, `js/`, `fonts/`, `icons/`. Leave out `tests/`, `docs/`, `planning/`, `tools/`, `README.md`.
+- The store gives it a new ID, so unpacked installs won't share synced heights/colours with the store install.
+- Listing needs a reason for each permission (`history` for the ribbon and titles, `bookmarks`, `favicon`, `storage`) and a privacy policy, since it reads history.
+- README still says it isn't on the store.
 
-## Open questions
-- Default inks are picked by position, so adding a book in the middle recolours every book after it. Drop-to-add makes that visible on every add. Pinning an ink to each new book's meta when it's created would stop it.
-- Esc on the slim card keeps the book but drops an unsaved rename. That's how the brief reads, but it's worth a second look.
-- The dock buttons still use the browser's default focus outline. The books use the vermilion ring.
+## Tests
+- `tests/*.py` only run on Windows as written (LOCALAPPDATA, chrome-win64, taskkill).
+- On Mac Chromium the folder is "Other Bookmarks", so "shelf reads its own folder by default" fails and the settings check times out on `select_option`.
+
+## Open questions (from v0.2, still open)
+- Esc on the slim card keeps the book but drops an unsaved rename.
+- The dock buttons still use the browser's default focus outline.
