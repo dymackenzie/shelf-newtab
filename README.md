@@ -2,13 +2,13 @@
 
 Shelf turns Chrome's new tab page into a bookshelf, where every link is a book with its cover dyed from the site's icon. The books live in their own bookmark folder, so your bookmarks bar stays the way it is. The putty paper is sampled from Shopify Editions and the spines are after Grokipedia's shelf.
 
-![Shelf in 3D](docs/shelf-3d.png)
+![Shelf in 2D](docs/shelf-2d.png)
 
 ## Main features
 
 - Every link is a book, coloured from its site's icon
 - Drag any link onto the shelf to add it
-- A 3D shelf with cloth spines, or a flat 2D one
+- A flat 2D shelf, or a 3D one with cloth spines
 - Nine papers (or any colour) and five accents
 - A ribbon on the site you open the most
 
@@ -39,7 +39,7 @@ Edge, Brave and Arc load it the same way. The extension ID is fixed in the manif
 
    ![Settings](docs/settings.png)
 
-   ![Shelf in 2D](docs/shelf-2d.png)
+   ![Shelf in 3D](docs/shelf-3d.png)
 
 ## All features
 
