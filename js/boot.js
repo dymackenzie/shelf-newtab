@@ -7,9 +7,7 @@ try {
 // the timer is a safety net in case something breaks first
 document.documentElement.classList.add('wait');
 setTimeout(() => document.documentElement.classList.remove('wait'), 2000);
-// ribbon style, a b or c
-document.documentElement.dataset.ribbon = localStorage.getItem('shelf:ribbon') || 'a';
 // 2d is a class too, so a flat shelf never opens as a 3d one for a frame
 if (localStorage.getItem('shelf:look') === '2d') document.documentElement.classList.add('flat');
 // keys from features that got cut
-for (const k of ['shelf:hide', 'shelf:paintings']) localStorage.removeItem(k);
+for (const k of ['shelf:hide', 'shelf:paintings', 'shelf:ribbon']) localStorage.removeItem(k);

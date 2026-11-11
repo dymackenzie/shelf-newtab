@@ -70,8 +70,6 @@ def main():
             page.wait_for_timeout(2500)
             cdp.send('Page.stopScreencast')
             # then scrub the opening: freeze every animation the moment it starts and step through by hand
-            look = os.environ.get('RIBBON')
-            if look: page.evaluate(f"localStorage.setItem('shelf:ribbon', '{look}')")
             page.reload(wait_until='commit')
             # wait_for_function evals a string, which the extension's CSP refuses, so poll instead
             for _ in range(500):

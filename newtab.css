@@ -149,32 +149,21 @@ main { padding-bottom: 9rem; }
 .letter { font: 500 1.15rem/1 var(--serif); color: currentColor; }
 /* the ribbon is a book's own silk marker, so it gets the same treatment as the cloth: the accent dyed a little
    deeper, fine grosgrain ribs, light down one edge, and a soft shadow. the clip cuts the end on the strip, so
-   the shadow sits on the wrapper (a clip would cut the shadow off too) */
+   the shadow sits on the wrapper (a clip would cut the shadow off too). it comes up out of the pages, leaning a
+   little the way loose silk does */
 .ribbon {
   --silk: color-mix(in oklab, var(--accent) 82%, #2A1216);
-  position: absolute; z-index: 1; width: .62rem; pointer-events: none;
+  position: absolute; z-index: 1; width: .62rem; height: 1.75rem; pointer-events: none;
+  left: calc(58% + var(--dx) / 2); bottom: calc(100% + var(--dy) / 2 - .05rem); transform-origin: 50% 100%; transform: rotate(6deg);
   filter: drop-shadow(.08rem .07rem .05rem rgba(var(--shadow), .45));
 }
-.ribbon::before, .ribbon::after {
-  content: none; position: absolute;
+.ribbon::before {
+  content: ""; position: absolute; inset: 0; clip-path: polygon(0 0, 50% 16%, 100% 0, 100% 100%, 0 100%);
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, .08) 0 1px, rgba(0, 0, 0, .08) 1px 2px),
     linear-gradient(90deg, rgba(0, 0, 0, .26), rgba(255, 255, 255, .16) 28%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, .3)),
     var(--silk);
 }
-/* A: comes up out of the pages, end cut in a V, leaning a little the way loose silk does */
-[data-ribbon=a] .ribbon { left: calc(58% + var(--dx) / 2); bottom: calc(100% + var(--dy) / 2 - .05rem); height: 1.75rem; transform-origin: 50% 100%; transform: rotate(6deg); }
-[data-ribbon=a] .ribbon::before { content: ""; inset: 0; clip-path: polygon(0 0, 50% 16%, 100% 0, 100% 100%, 0 100%); }
-/* B: out of the pages, over the head of the spine and down its front */
-[data-ribbon=b] .ribbon { top: -.06rem; right: .5rem; height: 3.6rem; }
-[data-ribbon=b] .ribbon::after { content: ""; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%); }
-[data-ribbon=b] .ribbon::before {
-  content: ""; left: 0; bottom: 100%; width: 100%; height: calc(var(--dy) / 2 + .06rem);
-  transform-origin: bottom left; transform: skewX(var(--skew-x)); filter: brightness(1.2);
-}
-/* C: the tail hangs out the bottom and over the front of the shelf */
-[data-ribbon=c] .ribbon { top: calc(100% - .1rem); left: 56%; height: 2.5rem; }
-[data-ribbon=c] .ribbon::before { content: ""; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%); }
 
 /* edit mode: no wobble, just a grab cursor */
 body.editing .book { cursor: grab; }
@@ -320,11 +309,7 @@ input[role=switch]:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px 
 }
 /* the ribbon is a flat tab of the accent poking out of the top, kept clear of the rounded corner */
 .flat .ribbon { left: auto; right: .85rem; top: -1.45rem; bottom: auto; width: .72rem; height: 1.5rem; transform: none; filter: none; }
-.flat .ribbon::after { content: none; }
-.flat .ribbon::before {
-  content: ""; inset: 0; width: auto; height: auto; transform: none; filter: none;
-  background: var(--accent); clip-path: polygon(0 0, 50% 26%, 100% 0, 100% 100%, 0 100%);
-}
+.flat .ribbon::before { background: var(--accent); clip-path: polygon(0 0, 50% 26%, 100% 0, 100% 100%, 0 100%); }
 
 @media (prefers-reduced-motion: no-preference) {
   .book { transition: transform .16s ease-out; }
