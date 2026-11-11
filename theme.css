@@ -1,4 +1,4 @@
-/* Putty. Ground sampled from Shopify Editions, spines after Grokipedia's shelf.
+/* White. Putty is sampled from Shopify Editions, spines after Grokipedia's shelf.
    Swap this file to reskin the shelf. */
 @font-face { font-family: "Fraunces"; src: url(fonts/fraunces.woff2) format("woff2"); font-weight: 100 900; font-style: normal; font-display: block; }
 @font-face { font-family: "Fraunces"; src: url(fonts/fraunces-italic.woff2) format("woff2"); font-weight: 300 600; font-style: italic; font-display: block; }
@@ -8,24 +8,24 @@
 :root {
   color-scheme: light;
 
-  --ground: #DDDDD1;
-  --card: #E9E8DF;
-  --field: #DDDDD1;
+  --ground: #FFFFFF;
+  --card: #FFFFFF;
+  --field: #F3F3F3;
   --text: #141210;
-  --dim: #5A5950;
+  --dim: #646361;
   --accent: #E2187F;       /* shapes only, too light for text */
-  --accent-text: #A30E57;
+  --accent-text: #D11675;
   --chip: #EFE9D8;
   --ink-dark: #141210;
   --oak-top: #D6C3A0; --oak-top-back: #C9B38C;
   --oak-front: #B89D72; --oak-front-low: #A88D63;
   --shadow: 32, 30, 22;    /* rgb, so shadows stay warm */
-  --grain: .1;
+  --grain: .05;
   --rule: rgba(32, 30, 22, .45);
 
   --track-on: var(--text);
   --knob-on: var(--ground);
-  --track-off: #C4C3B6;
+  --track-off: #D9D9D9;
   --knob-off: var(--card);
 
   /* spine inks: background / text. 0-3 keep their old slots so saved books stay close */
