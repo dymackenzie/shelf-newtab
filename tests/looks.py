@@ -1,6 +1,6 @@
 """Quick screenshots of the shelf at 1440 and 900, plus settings, edit panel and add card with `states`.
 Same profile setup as cdp_test.py.
-    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [demo] [states] [hover] [fresh] [flat] [2d] [nograin] [paper=..] [accent=..]
+    C:/dev/.venvs/shelf-newtab/Scripts/python tests/looks.py [out_dir] [demo] [states] [hover] [fresh] [flat] [3d] [nograin] [paper=..] [accent=..]
 """
 import os, subprocess, sys, time, urllib.request
 from playwright.sync_api import sync_playwright
@@ -55,7 +55,7 @@ def main():
               'b:https://www.notion.so/': {s: 3}, 'b:https://canvas.ubc.ca/': {s: 4}, 'b:https://claude.ai/new': {s: 3},
               'b:https://www.wikipedia.org/': {s: 4}, 'b:https://open.spotify.com/': {s: 3}, 'b:https://recent.design/': {s: 3}}).then(() => 1)""")
             off = {k: False for k, flag in (('subShelves', 'flat'), ('grain', 'nograin')) if flag in sys.argv}
-            if '2d' in sys.argv: off['look'] = '2d'
+            if '3d' in sys.argv: off['look'] = '3d'
             off.update({a.split('=')[0]: a.split('=', 1)[1] for a in sys.argv if a.startswith(('paper=', 'accent='))})  # e.g. paper=white
             if off:  # parts switched off in settings
                 page.evaluate("off => chrome.storage.sync.get('settings').then(r => chrome.storage.sync.set({ settings: { ...r.settings, ...off } })).then(() => 1)", off)

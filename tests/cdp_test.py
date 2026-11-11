@@ -157,6 +157,9 @@ def run(page, cdp, errors):
     ribbon = ev("[...document.querySelectorAll('.book')].filter(b => b.querySelector('.ribbon')).map(b => b.querySelector('.nm').textContent)")
     check('ribbon on the most opened book', ribbon == ['Piazza'], ribbon)
     check('bookmarks bar stays off the shelf', 'Bar only' not in names)
+    check('2D is the default look', ev("chrome.storage.sync.get('settings').then(r => r.settings.look)") == '2d' and ev("document.documentElement.classList.contains('flat')"))
+    # the depth checks are about the 3D shelf, 7c switches back to 2D
+    ev("chrome.storage.sync.get('settings').then(r => chrome.storage.sync.set({ settings: { ...r.settings, look: '3d' } })).then(() => 1)"); sleep(600)
 
     print('\n# 1b depth')
     lifted = lambda: ev("T.books().filter(b => getComputedStyle(b.querySelector('.box')).transform !== 'none').map(b => b.querySelector('.nm').textContent)")
@@ -185,7 +188,6 @@ def run(page, cdp, errors):
       const planks = [...document.querySelectorAll('.plank')]; const end = planks[planks.length - 1].getBoundingClientRect().bottom;
       return { above: Math.round(Math.min(...tops)), below: Math.round(innerHeight - end), scrolls: document.documentElement.scrollHeight > innerHeight } })()""")
     check('the shelves sit in the middle of the window, no scrollbar', abs(gap['above'] - gap['below']) < 0.15 * ev('innerHeight') and not gap['scrolls'], gap)
-    check('3D is the default look', ev("chrome.storage.sync.get('settings').then(r => r.settings.look)") == '3d' and not ev("document.documentElement.classList.contains('flat')"))
 
     sleep(800)
     cloth = ev("""(async () => { const k = 'c:https://piazza.com/', c = (await chrome.storage.local.get(k))[k];
