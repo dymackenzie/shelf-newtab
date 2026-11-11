@@ -1,6 +1,6 @@
 # Shelf
 
-Shelf turns Chrome's new tab page into a bookshelf, where every link is a book with its cover dyed from the site's icon. The books live in their own bookmark folder, so your bookmarks bar stays the way it is. The putty paper is sampled from Shopify Editions and the spines are after Grokipedia's shelf.
+Every link on Shelf is a book on your new tab, and the cover colour comes from the site's icon. The books are bookmarks in their own folder, so your bookmarks bar stays the way it is. The putty paper colour came from Shopify Editions and the 3D spines are based on Grokipedia's shelf.
 
 ![Shelf in 2D](docs/shelf-2d.png)
 
@@ -16,7 +16,7 @@ Shelf turns Chrome's new tab page into a bookshelf, where every link is a book w
 
 It isn't on the Chrome Web Store, so it gets loaded as an unpacked extension.
 
-1. Download this repo with **Code** > **Download ZIP** and unzip it somewhere it can stay, because Chrome reads it from that folder every time (mine sits in `C:\dev\personal\shelf-newtab`).
+1. Download this repo with **Code** > **Download ZIP** and unzip it somewhere it can stay, because Chrome reads it from that folder every time (mine sits in `~/dev/personal/shelf-newtab`).
 2. In `chrome://extensions` there's a **Developer mode** toggle in the top right corner, turn that on.
 3. Then click **Load unpacked** and pick the unzipped folder.
 4. Open a new tab and the shelf should be there. The first time, Chrome asks if you meant to change your new tab page, just keep it.
