@@ -102,7 +102,7 @@ def main():
                     page.screenshot(path=os.path.join(OUT, 'card.png'))
                     page.evaluate("document.querySelector('#card .undo').click()"); page.wait_for_timeout(500)
     finally:
-        subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
+        proc.kill() if os.name != 'nt' else subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
     print('errors:', errors or 'none')
 
 main()

@@ -83,7 +83,7 @@ def main():
                 page.evaluate(f'document.getAnimations().forEach(a => a.currentTime = {t})')
                 page.screenshot(path=os.path.join(OUT, f'scrub-{t:04d}.png'))
     finally:
-        subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
+        proc.kill() if os.name != 'nt' else subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
 
     if not frames: sys.exit('no frames')
     base = frames[0][0]

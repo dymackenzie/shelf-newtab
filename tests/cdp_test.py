@@ -19,6 +19,8 @@ TMP = os.environ.get('TMPDIR') or os.path.join(os.environ['LOCALAPPDATA'], 'Temp
 PROF = os.path.join(TMP, 'shelf-prof-v02')
 EXT_ID = 'emgclpndjmgfkfkmaggaeefeockeddhh'  # fixed by manifest.key
 PORT = 9341
+# chromium on mac names the root folder with a capital B
+OTHER = 'Other Bookmarks' if sys.platform == 'darwin' else 'Other bookmarks'
 
 LINKS = [('Calendar', 'https://calendar.google.com/calendar/u/0/r'), ('Docs', 'https://docs.google.com/document/u/0/'),
          ('Notion', 'https://www.notion.so/'), ('Photos', 'https://photos.google.com/'), ('Canvas', 'https://canvas.ubc.ca/'),
@@ -53,7 +55,9 @@ def check(name, ok, detail=''):
 
 
 def chromium():
-    exes = glob.glob(os.path.join(os.environ['LOCALAPPDATA'], 'ms-playwright', 'chromium-*', 'chrome-win64', 'chrome.exe'))
+    exes = glob.glob(os.path.join(os.environ.get('LOCALAPPDATA', ''), 'ms-playwright', 'chromium-*', 'chrome-win64', 'chrome.exe'))
+    # mac keeps playwright's browsers in ~/Library/Caches
+    exes += glob.glob(os.path.expanduser('~/Library/Caches/ms-playwright/chromium-*/chrome-mac-arm64/*.app/Contents/MacOS/*'))
     if not exes: sys.exit('no Playwright Chromium found, run: python -m playwright install chromium')
     return max(exes, key=lambda p: int(re.search(r'chromium-(\d+)', p).group(1)))
 
@@ -181,7 +185,7 @@ def run(page, cdp, errors):
       return out; })""")
     check('no dead spots on any spine', not holes, holes[:8])
     where = ev("chrome.storage.sync.get('settings').then(r => r.settings.folder)")
-    check("shelf reads its own folder by default", where == 'Other bookmarks / Shelf', where)
+    check("shelf reads its own folder by default", where == f'{OTHER} / Shelf', where)
     page_bits = ev("['#index', '#date', '.plate', 'h1'].filter(q => document.querySelector(q))")
     check('just the shelf: no date, contents or painting on the page', page_bits == [], page_bits)
     gap = ev("""(() => { const tops = [...document.querySelectorAll('.book')].map(b => b.getBoundingClientRect().top);
@@ -349,11 +353,11 @@ def run(page, cdp, errors):
         check(f'{k} back on', ev(f"chrome.storage.sync.get('settings').then(r => r.settings['{k}'])") is True)
     check('subfolder shelves on again', ev("document.querySelectorAll('#shelves h2').length") == 1)
     check('ribbon back after turning it on', ev("document.querySelectorAll('.ribbon').length") == 1)
-    page.select_option('#s-folder', 'Other bookmarks / Shelf / Later'); sleep(600)
+    page.select_option('#s-folder', f'{OTHER} / Shelf / Later'); sleep(600)
     check('changing the folder re-renders the shelf', ev('T.names()') == ['Are.na', 'recent.design'])
     stored = ev("chrome.storage.sync.get('settings').then(r => r.settings.folder)")
-    check('folder persists by path', stored == 'Other bookmarks / Shelf / Later', stored)
-    page.select_option('#s-folder', 'Other bookmarks / Shelf'); sleep(600)
+    check('folder persists by path', stored == f'{OTHER} / Shelf / Later', stored)
+    page.select_option('#s-folder', f'{OTHER} / Shelf'); sleep(600)
     page.focus('#s-folder')
     order = []
     for _ in range(20):  # the 3D/2D pair (one stop), 9 papers, the picker, 5 accents, 4 switches
@@ -542,7 +546,7 @@ def main():
             page.wait_for_timeout(2500)
             run(page, cdp, errors)
     finally:
-        subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
+        proc.kill() if os.name != 'nt' else subprocess.run(['taskkill', '/PID', str(proc.pid), '/T', '/F'], capture_output=True)
 
     failed = [n for n, ok in results if not ok]
     print(f"\n{len(results) - len(failed)}/{len(results)} passed" + (f"; failed: {failed}" if failed else ''))
