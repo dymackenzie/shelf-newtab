@@ -14,14 +14,20 @@ Every link on Shelf is a book on your new tab, and the cover colour comes from t
 
 ## Install
 
-It isn't on the Chrome Web Store, so it gets loaded as an unpacked extension.
+Shelf is on the [Chrome Web Store](https://chromewebstore.google.com/detail/shelf/djbcolnhcjpbmelhjphpelbpghomjaji). Brave and Arc install it from there too, and so does Edge once **Allow extensions from other stores** is on.
+
+The first time you open a new tab, Chrome asks if you meant to change your new tab page, just keep it. Your settings, book heights and colours carry over to your other computers through Chrome sync.
+
+### Loading it unpacked
+
+If you'd rather run it straight from the code:
 
 1. Download this repo with **Code** > **Download ZIP** and unzip it somewhere it can stay, because Chrome reads it from that folder every time (mine sits in `~/dev/personal/shelf-newtab`).
 2. In `chrome://extensions` there's a **Developer mode** toggle in the top right corner, turn that on.
 3. Then click **Load unpacked** and pick the unzipped folder.
 4. Open a new tab and the shelf should be there. The first time, Chrome asks if you meant to change your new tab page, just keep it.
 
-Edge, Brave and Arc load it the same way. The extension ID is fixed in the manifest, so if you load it on a second computer your book heights and colours carry over through Chrome sync.
+Edge, Brave and Arc load it the same way. The extension ID is fixed in the manifest, so unpacked copies on different computers share heights and colours through Chrome sync. The store version has its own ID, so it doesn't share them with an unpacked copy.
 
 ## How to use it
 
